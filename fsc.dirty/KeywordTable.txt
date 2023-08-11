@@ -1,0 +1,14 @@
+Keywords																	|	Description
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+var NAME TYPE																|	Create an empty variable (var variableName string)
+array NAME TYPE SIZE														|	Create an empty array with the size of SIZE (array arrayName string 10)
+set NAME VALUE																|	Set a variable (set variableName "hello world")
+set NAME at INDEX VALUE														|	Set an item of an array at index
+jump JUMP_POINT																|	Go to a jump point (jump here)
+target JUMP_POINT_NAME														|	A jump point (target here)
+extern RETURN_VARIABLE from METHOD_NAME PARAMETER_VARIABLE, "-", ...		|	Refers to an external method (extern variableName from "WriteLine", anotherVariableName)
+equals TARGET_VARAIBLE VARIABLE_NAME VARIABLE_NAME							|	Compares two variables with each other (equals variableName1 variableName2 variableName3)
+greater TARGET_VARAIBLE VARIABLE_NAME VARIABLE_NAME							|	Checks, if variable is greater than variable (greater variableName1 variableName2 variableName3)
+less TARGET_VARAIBLE VARIABLE_NAME VARIABLE_NAME							|	Checks, if variable is less than variable (less variableName1 variableName2 variableName3)
+is VARIABLE_NAME JUMP_POINT													|	Goes to a jump point if variable is true (is variableName here)
+in TARGET_VARAIBLE VARIABLE_NAME ARRAY_NAME									|	Checks if variable is avaiable in array (in variableName1 variableName2 arrayVariableName)

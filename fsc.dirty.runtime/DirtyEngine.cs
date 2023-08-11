@@ -56,7 +56,7 @@ namespace FSC.Dirty.Runtime
 
                     string value = _code[i].Substring(_code[i].IndexOf(" ", 4) + 1);
 
-                    if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\""))
+                    if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\"") && !Regex.IsMatch(value, @"^(\d+.\d+|\d+)$"))
                     {
                         if (!VariableManagement.Variables.ContainsKey(value)) throw new Exception($"[{value}] in line [{i}] is not a variable");
 
@@ -84,12 +84,14 @@ namespace FSC.Dirty.Runtime
                 {
                     string name = _code[i].Split(' ')[1];
 
-                    if (!VariableManagement.Variables.ContainsKey(name)) throw new Exception($"Variable [{name}] in line [{i}] does not exist");
+                    if (!VariableManagement.Arrays.ContainsKey(name)) throw new Exception($"Variable [{name}] in line [{i}] does not exist");
 
                     int index = Convert.ToInt32(_code[i].Split(' ')[3]);
-                    string value = _code[i].Substring(_code[i].IndexOf(" ", 4) + 1);
+                    string value = _code[i];
+                    value = value.Remove(0, value.IndexOf(" ", 4) + 1);
+                    value = value.Remove(0, value.IndexOf(" ", 4) + 1);
 
-                    if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\""))
+                    if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\"") && !Regex.IsMatch(value, @"^(\d+.\d+|\d+)$"))
                     {
                         if (!VariableManagement.Variables.ContainsKey(value)) throw new Exception($"[{value}] in line [{i}] is not a variable");
 
@@ -100,7 +102,7 @@ namespace FSC.Dirty.Runtime
 
                         VariableManagement.Arrays[name].Value![index] = variable.Value!;
                     }
-                    else if (value!.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\""))
+                    else
                     {
                         if (WhichType(value?.ToString() ?? "") == VariableManagement.Arrays[name].RuntimeType && VariableManagement.Arrays[name].RuntimeType != FscRuntimeTypes.Void)
                         {
@@ -123,7 +125,9 @@ namespace FSC.Dirty.Runtime
                     if (!VariableManagement.Variables.ContainsKey(var1)) throw new Exception($"Variable [{var1}] in line [{i}] does not exist");
                     if (!VariableManagement.Variables.ContainsKey(var2)) throw new Exception($"Variable [{var2}] in line [{i}] does not exist");
 
-                    bool result = VariableManagement.Variables[var1].Equals(VariableManagement.Variables[var2]);
+                    bool resultValue = VariableManagement.Variables[var1].Value!.Equals(VariableManagement.Variables[var2].Value);
+                    bool resultTypes = VariableManagement.Variables[var1].RuntimeType!.Equals(VariableManagement.Variables[var2].RuntimeType);
+                    bool result = resultValue && resultTypes;
 
                     if (VariableManagement.Variables[target].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Only number may be used as boolean in line {i}");
 
@@ -143,7 +147,7 @@ namespace FSC.Dirty.Runtime
                     if (VariableManagement.Variables[var1].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
                     if (VariableManagement.Variables[var2].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
 
-                    bool result = (int)VariableManagement.Variables[var1].Value! > (int)VariableManagement.Variables[var2].Value!;
+                    bool result = (double)VariableManagement.Variables[var1].Value! > (double)VariableManagement.Variables[var2].Value!;
 
                     if (VariableManagement.Variables[target].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Only number may be used as boolean in line {i}");
 
@@ -163,7 +167,7 @@ namespace FSC.Dirty.Runtime
                     if (VariableManagement.Variables[var1].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
                     if (VariableManagement.Variables[var2].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
 
-                    bool result = (int)VariableManagement.Variables[var1].Value! < (int)VariableManagement.Variables[var2].Value!;
+                    bool result = (double)VariableManagement.Variables[var1].Value! < (double)VariableManagement.Variables[var2].Value!;
 
                     if (VariableManagement.Variables[target].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Only number may be used as boolean in line {i}");
 
@@ -298,11 +302,11 @@ namespace FSC.Dirty.Runtime
             if (value.StartsWith("\"") && value.EndsWith("\"") && value.Length > 1)
                 return FscRuntimeTypes.Text;
 
+            if (Regex.IsMatch(value, @"^(\d+.\d+|\d+)$"))
+                return FscRuntimeTypes.Number;
+
             if (value.Length == 1)
                 return FscRuntimeTypes.Char;
-
-            if (Regex.IsMatch(value, @"^[(\d+.\d+|\d)]$"))
-                return FscRuntimeTypes.Number;
 
             return FscRuntimeTypes.Void;
         }

@@ -119,7 +119,7 @@ namespace FSC.Dirty.Runtime
                 }
                 else if (line.StartsWith("equals"))
                 {
-                    Match match = Regex.Match(line, KeywordRegex.ExternKeyword);
+                    Match match = Regex.Match(line, KeywordRegex.EqualsKeyword);
                     if (match.Success) continue;
                     else
                     {
