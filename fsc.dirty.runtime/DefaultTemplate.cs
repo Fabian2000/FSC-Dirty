@@ -21,6 +21,12 @@ namespace FSC.Dirty.Runtime
             {
                 return (FscRuntimeTypes.Text, Console.ReadLine());
             });
+
+            ExternCallMethods.Add("Clear", (object[] args) =>
+            {
+                Console.Clear();
+                return (FscRuntimeTypes.Void, null);
+            });
         }
     }
 }

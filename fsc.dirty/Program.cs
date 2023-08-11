@@ -78,6 +78,7 @@ extern result from ""WriteLine"", info
 jump end
 
 target noMatch
+extern result from ""Clear""
 set info ""No language match found - retry""
 extern result from ""WriteLine"", info
 jump start
