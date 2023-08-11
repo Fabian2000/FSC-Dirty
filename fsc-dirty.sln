@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fsc.dirty.runtime", "fsc-dirty\fsc.dirty.runtime.csproj", "{656FA731-C86E-4BE2-9E90-270FE874BCD7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fsc.dirty.runtime", "fsc.dirty.runtime\fsc.dirty.runtime.csproj", "{656FA731-C86E-4BE2-9E90-270FE874BCD7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fsc.runtime.template", "fsc-compile\fsc.runtime.template.csproj", "{A4E97136-C5CE-46AD-AC5E-41E2BBBBA241}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fsc.runtime.template", "fsc.dirty.runtime.template\fsc.dirty.runtime.template.csproj", "{A4E97136-C5CE-46AD-AC5E-41E2BBBBA241}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fsc.dirty", "fsc.dirty\fsc.dirty.csproj", "{F3DB0610-A978-4920-81AE-19BEF6D869D7}"
 EndProject
