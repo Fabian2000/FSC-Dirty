@@ -1,0 +1,56 @@
+var result void
+var info text
+var language text
+var compare number
+var english text
+var german text
+var french text
+var title text
+
+set title "Greeting by language"
+extern result from "Title", title
+
+target start
+set info "Please enter one of these languages [english|german|french]:"
+extern result from "WriteLine", info
+
+extern language from "ReadLine"
+
+set english "english"
+set german "german"
+set french "french"
+
+equals compare language english
+is compare jumpEnglish
+
+equals compare language german
+is compare jumpGerman
+
+equals compare language french
+is compare jumpFrench
+
+jump noMatch
+
+target jumpEnglish
+set info "Hello World"
+extern result from "WriteLine", info
+jump end
+
+target jumpGerman
+set info "Hallo Welt"
+extern result from "WriteLine", info
+jump end
+
+target jumpFrench
+set info "Bonjour le monde"
+extern result from "WriteLine", info
+jump end
+
+target noMatch
+extern result from "Clear"
+set info "No language match found - retry"
+extern result from "WriteLine", info
+jump start
+
+target end
+extern result from "Pause"

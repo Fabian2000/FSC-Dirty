@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "fsc.dirty": {
+      "commandName": "Project",
+      "commandLineArgs": "G:\\Projekte\\GitHub\\FSC-Dirty\\fsc.dirty\\bin\\Debug\\net7.0\\hello_languages.dty"
+    }
+  }
+}

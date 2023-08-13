@@ -12,3 +12,4 @@ greater TARGET_VARAIBLE VARIABLE_NAME VARIABLE_NAME							|	Checks, if variable 
 less TARGET_VARAIBLE VARIABLE_NAME VARIABLE_NAME							|	Checks, if variable is less than variable (less variableName1 variableName2 variableName3)
 is VARIABLE_NAME JUMP_POINT													|	Goes to a jump point if variable is true (is variableName here)
 in TARGET_VARAIBLE VARIABLE_NAME ARRAY_NAME									|	Checks if variable is avaiable in array (in variableName1 variableName2 arrayVariableName)
+delete VARIABLE_NAME														|	Deletes a variable from memory (delete variableName)

@@ -1,10 +1,10 @@
 ﻿using FSC.Dirty.Runtime.Template;
 
-namespace FSC.Dirty.Runtime
+namespace FSC.Dirty
 {
-    internal class DefaultTemplate : IFscRuntime
+    internal class DirtyMethods : IFscRuntime
     {
-        public bool UseDefaultTemplate => false;
+        public bool UseDefaultTemplate => true;
 
         public CallMethodDictionary ExternCallMethods { get; set; } = new CallMethodDictionary();
 
@@ -31,6 +31,13 @@ namespace FSC.Dirty.Runtime
             ExternCallMethods.Add("Pause", (object[] args) =>
             {
                 Console.ReadKey(true);
+                return (FscRuntimeTypes.Void, null);
+            });
+
+            ExternCallMethods.Add("Title", (object[] args) =>
+            {
+                object arg = args[0];
+                Console.Title = $"{arg}";
                 return (FscRuntimeTypes.Void, null);
             });
         }

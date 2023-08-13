@@ -4,10 +4,11 @@ using FSC.Dirty.Runtime.Template;
 
 namespace FSC.Dirty.Runtime
 {
-    public class DirtyRuntime
+    public class DirtyRuntime : IDisposable
     {
         private readonly IFscRuntime _runtimeDefaults;
         private List<string> _code = new List<string>();
+        private DirtyEngine? _engine;
 
         public DirtyRuntime()
         {
@@ -43,7 +44,7 @@ namespace FSC.Dirty.Runtime
                 count++;
 
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                else if (Regex.IsMatch(line, @"^(var|array|set|jump|target|extern|equals|greater|less|is|in)\s"))
+                else if (Regex.IsMatch(line, @"^(var|array|set|jump|target|extern|equals|greater|less|is|in|delete)\s"))
                 {
                     _code.Add(line);
                     continue;
@@ -162,6 +163,15 @@ namespace FSC.Dirty.Runtime
                         throw new Exception($"Error in line [{count}] => {line}");
                     }
                 }
+                else if (line.StartsWith("delete"))
+                {
+                    Match match = Regex.Match(line, KeywordRegex.DeleteKeyword);
+                    if (match.Success) continue;
+                    else
+                    {
+                        throw new Exception($"Error in line [{count}] => {line}");
+                    }
+                }
             }
         }
 
@@ -182,8 +192,35 @@ namespace FSC.Dirty.Runtime
                 throw new Exception("Missing or empty script");
             }
 
-            DirtyEngine engine = new DirtyEngine(_code, _runtimeDefaults);
-            engine.Run();
+            _engine = new DirtyEngine(_code, _runtimeDefaults);
+            _engine.Run();
+        }
+
+        public void CleanUp()
+        {
+            if (_engine?.IsRunning ?? true)
+            {
+                return;
+            }
+
+            _code.Clear();
+            VariableManagement.Variables.Clear();
+            VariableManagement.Arrays.Clear();
+        }
+
+        public void Cancel()
+        {
+            _engine?.CancelScript();
+        }
+
+        public void Dispose()
+        {
+            CleanUp();
+        }
+
+        ~DirtyRuntime()
+        {
+            Dispose();
         }
     }
 }

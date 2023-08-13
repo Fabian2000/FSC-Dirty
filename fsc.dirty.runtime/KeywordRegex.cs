@@ -14,5 +14,6 @@
         internal const string LessKeyword = /* lang=regex */ @"less\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string IsKeyword = /* lang=regex */ @"is\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string InKeyword = /* lang=regex */ @"in\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
+        internal const string DeleteKeyword = /* lang=regex */ @"delete\s[a-zA-Z_][a-zA-Z0-9_]+$";
     }
 }

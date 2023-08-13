@@ -8,6 +8,8 @@ namespace FSC.Dirty.Runtime
     {
         private readonly List<string> _code;
         private readonly IFscRuntime _runtimeDefaults;
+        private bool _isRunning = false;
+        private bool _cancel = false;
 
         internal DirtyEngine(List<string> code, IFscRuntime runtimeDefaults)
         {
@@ -17,6 +19,8 @@ namespace FSC.Dirty.Runtime
 
         internal void Run()
         {
+            _isRunning = true;
+
             for (int i = 0; i < _code.Count; i++)
             {
                 if (_code[i].StartsWith("jump"))
@@ -265,8 +269,40 @@ namespace FSC.Dirty.Runtime
 
                     throw new Exception($"Return type does not match to the return value in line [{i}]");
                 }
+                else if (_code[i].StartsWith("delete"))
+                {
+                    string variable = _code[i].Split(' ')[1];
+
+                    if (VariableManagement.Variables.ContainsKey(variable))
+                    {
+                        VariableManagement.Variables.Remove(variable);
+                    }
+                    else if (VariableManagement.Arrays.ContainsKey(variable))
+                    {
+                        VariableManagement.Arrays.Remove(variable);
+                    }
+                    else
+                    {
+                        throw new Exception($"Can not delete variable {variable} in line [{i}]");
+                    }
+                }
+
+                if (_cancel)
+                {
+                    _cancel = false;
+                    break;
+                }
             }
+
+            _isRunning = false;
         }
+
+        internal void CancelScript()
+        {
+            _cancel = true;
+        }
+
+        internal bool IsRunning { get => _isRunning; }
 
         private int FindTarget(string name)
         {

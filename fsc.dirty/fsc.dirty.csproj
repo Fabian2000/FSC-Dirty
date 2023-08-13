@@ -5,11 +5,21 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\fsc.dirty.runtime.template\fsc.dirty.runtime.template.csproj" />
     <ProjectReference Include="..\fsc.dirty.runtime\fsc.dirty.runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="hello_languages.dty">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KeywordTable.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
