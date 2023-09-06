@@ -44,7 +44,7 @@ namespace FSC.Dirty.Runtime
                 count++;
 
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                else if (Regex.IsMatch(line, @"^(var|array|set|jump|target|extern|equals|greater|less|is|in|delete)\s"))
+                else if (Regex.IsMatch(line, @"^(var|array|set|jump|target|extern|equals|greater|less|and|or|is|in|delete)\s"))
                 {
                     _code.Add(line);
                     continue;
@@ -139,6 +139,24 @@ namespace FSC.Dirty.Runtime
                 else if (line.StartsWith("less"))
                 {
                     Match match = Regex.Match(line, KeywordRegex.LessKeyword);
+                    if (match.Success) continue;
+                    else
+                    {
+                        throw new Exception($"Error in line [{count}] => {line}");
+                    }
+                }
+                else if (line.StartsWith("and"))
+                {
+                    Match match = Regex.Match(line, KeywordRegex.AndKeyword);
+                    if (match.Success) continue;
+                    else
+                    {
+                        throw new Exception($"Error in line [{count}] => {line}");
+                    }
+                }
+                else if (line.StartsWith("or"))
+                {
+                    Match match = Regex.Match(line, KeywordRegex.OrKeyword);
                     if (match.Success) continue;
                     else
                     {

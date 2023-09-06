@@ -12,6 +12,8 @@
         internal const string EqualsKeyword = /* lang=regex */ @"equals\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string GreaterKeyword = /* lang=regex */ @"greater\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string LessKeyword = /* lang=regex */ @"less\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
+        internal const string AndKeyword = /* lang=regex */ @"and\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
+        internal const string OrKeyword = /* lang=regex */ @"or\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string IsKeyword = /* lang=regex */ @"is\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string InKeyword = /* lang=regex */ @"in\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string DeleteKeyword = /* lang=regex */ @"delete\s[a-zA-Z_][a-zA-Z0-9_]+$";

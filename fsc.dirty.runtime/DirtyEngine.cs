@@ -178,6 +178,46 @@ namespace FSC.Dirty.Runtime
                     VariableManagement.Variables[target].Value = result ? 1 : 0;
                     continue;
                 }
+                else if (_code[i].StartsWith("and"))
+                {
+                    string[] splits = _code[i].Split(' ');
+                    string target = splits[1];
+                    string var1 = splits[2];
+                    string var2 = splits[3];
+
+                    if (!VariableManagement.Variables.ContainsKey(var1)) throw new Exception($"Variable [{var1}] in line [{i}] does not exist");
+                    if (!VariableManagement.Variables.ContainsKey(var2)) throw new Exception($"Variable [{var2}] in line [{i}] does not exist");
+
+                    if (VariableManagement.Variables[var1].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
+                    if (VariableManagement.Variables[var2].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
+
+                    bool result = (double)VariableManagement.Variables[var1].Value! == 1 && (double)VariableManagement.Variables[var2].Value! == 1;
+
+                    if (VariableManagement.Variables[target].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Only number may be used as boolean in line {i}");
+
+                    VariableManagement.Variables[target].Value = result ? 1 : 0;
+                    continue;
+                }
+                else if (_code[i].StartsWith("or"))
+                {
+                    string[] splits = _code[i].Split(' ');
+                    string target = splits[1];
+                    string var1 = splits[2];
+                    string var2 = splits[3];
+
+                    if (!VariableManagement.Variables.ContainsKey(var1)) throw new Exception($"Variable [{var1}] in line [{i}] does not exist");
+                    if (!VariableManagement.Variables.ContainsKey(var2)) throw new Exception($"Variable [{var2}] in line [{i}] does not exist");
+
+                    if (VariableManagement.Variables[var1].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
+                    if (VariableManagement.Variables[var2].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable must be a number in line {i}");
+
+                    bool result = (double)VariableManagement.Variables[var1].Value! == 1 || (double)VariableManagement.Variables[var2].Value! == 1;
+
+                    if (VariableManagement.Variables[target].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Only number may be used as boolean in line {i}");
+
+                    VariableManagement.Variables[target].Value = result ? 1 : 0;
+                    continue;
+                }
                 else if (_code[i].StartsWith("is"))
                 {
                     string name = _code[i].Split(' ')[1];
