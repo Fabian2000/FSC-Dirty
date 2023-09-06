@@ -1,7 +1,7 @@
 Keywords																	|	Description
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-var NAME TYPE																|	Create an empty variable (var variableName string)
-array NAME TYPE SIZE														|	Create an empty array with the size of SIZE (array arrayName string 10)
+var NAME TYPE																|	Create an empty variable (var variableName text)
+array NAME TYPE SIZE														|	Create an empty array with the size of SIZE (array arrayName text 10)
 set NAME VALUE																|	Set a variable (set variableName "hello world")
 set NAME at INDEX VALUE														|	Set an item of an array at index
 jump JUMP_POINT																|	Go to a jump point (jump here)
