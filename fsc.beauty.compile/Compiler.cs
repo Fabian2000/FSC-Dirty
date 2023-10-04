@@ -1,10 +1,12 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FSC.Beauty.Compile
 {
     public class Compiler
     {
         private List<string> _code = new List<string>();
+        private List<string> _compiledCode = new List<string>();
 
         public void Compile(string inputCode, out string outputCode)
         {
@@ -25,6 +27,30 @@ namespace FSC.Beauty.Compile
 
                 _code.Add(line);
             }
+
+            _code = _code.Select(x => x.ReplaceLineEndings("")).ToList();
+
+            foreach (string codeLine in _code)
+            {
+                if (codeLine == string.Empty)
+                {
+                    continue;
+                }
+
+                if (IsVariable(codeLine))
+                {
+                    TranslateVariable(codeLine);
+                    continue;
+                }
+
+                if (IsArray(codeLine))
+                {
+                    TranslateArray(codeLine);
+                    continue;
+                }
+            }
+
+            outputCode = string.Join(Environment.NewLine, _compiledCode);
         }
 
         private void RemoveComments()
@@ -101,6 +127,74 @@ namespace FSC.Beauty.Compile
             }
 
             return true;
+        }
+
+        private bool IsVariable(string codeLine)
+        {
+            return Regex.IsMatch(codeLine, @"(^\s*(void|text|char|number|bool)\s)|(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(=\s*(.+))$)");
+        }
+
+        private void TranslateVariable(string codeLine)
+        {
+            string type, name, value;
+            Match match;
+
+            if (Regex.IsMatch(codeLine, @"^\s*(void|text|char|number|bool)\s"))
+            {
+                if (codeLine.Contains("="))
+                {
+                    match = Regex.Match(codeLine, @"^\s*(void|text|char|number|bool)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*(=\s*(.+))$");
+                    type = match.Groups[1].Value;
+                    name = match.Groups[2].Value;
+                    value = match.Groups[4].Value;
+
+                    _compiledCode.Add($"var {name} {type}");
+                    _compiledCode.Add($"set {name} {value}");
+                    return;
+                }
+
+                match = Regex.Match(codeLine, @"^\s*(void|text|char|number|bool)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$");
+                type = match.Groups[1].Value;
+                name = match.Groups[2].Value;
+
+                _compiledCode.Add($"var {name} {type}");
+                return;
+            }
+
+            match = Regex.Match(codeLine, @"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(=\s*(.+))$");
+            name = match.Groups[1].Value;
+            value = match.Groups[3].Value;
+
+            _compiledCode.Add($"set {name} {value}");
+        }
+
+        private bool IsArray(string codeLine)
+        {
+            return Regex.IsMatch(codeLine, @"(^\s*(void|text|char|number|bool)\[\d+\]\s)|(\s*([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]\s*(=\s*(.+))$)");
+        }
+
+        private void TranslateArray(string codeLine)
+        {
+            string type, name, value, index;
+            Match match;
+
+            if (Regex.IsMatch(codeLine, @"^\s*(void|text|char|number|bool)\[\d+\]\s"))
+            {
+                match = Regex.Match(codeLine, @"^\s*(void|text|char|number|bool)\[(\d+)\]\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$");
+                type = match.Groups[1].Value;
+                index = match.Groups[2].Value;
+                name = match.Groups[3].Value;
+
+                _compiledCode.Add($"array {name} {type} {index}");
+                return;
+            }
+
+            match = Regex.Match(codeLine, @"\s*([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]\s*(=\s*(.+))$");
+            name = match.Groups[1].Value;
+            index = match.Groups[2].Value;
+            value = match.Groups[4].Value;
+
+            _compiledCode.Add($"set {name} at {index} {value}");
         }
     }
 }
