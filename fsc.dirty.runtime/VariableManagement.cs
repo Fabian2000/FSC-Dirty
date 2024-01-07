@@ -30,17 +30,97 @@ namespace FSC.Dirty.Runtime
 
             return null;
         }
+
+        internal static object? GetValueFromPointer(string name)
+        {
+            if (!Variables.ContainsKey(name))
+            {
+                return null;
+            }
+
+            Variable pvariable = Variables[name];
+
+            if (pvariable.RuntimeType != FscRuntimeTypes.Pointer)
+            {
+                return null;
+            }
+
+            long pointer = Convert.ToInt64(pvariable.Value);
+
+            if (pointer < 0)
+            {
+                return null;
+            }
+
+            if (Variables.FirstOrDefault(x => x.Value.Address == pointer).Value is Variable variable)
+            {
+                return variable.Value;
+            }
+            else if (Arrays.FirstOrDefault(x => x.Value.Address == pointer).Value is Array array)
+            {
+                return array.Value;
+            }
+
+            return null;
+        }
+
+        internal static void SetValueFromPointer(string name, object? value)
+        {
+            if (!Variables.ContainsKey(name))
+            {
+                return;
+            }
+
+            Variable pvariable = Variables[name];
+
+            if (pvariable.RuntimeType != FscRuntimeTypes.Pointer)
+            {
+                return;
+            }
+
+            long pointer = Convert.ToInt64(pvariable.Value);
+
+            if (pointer < 0)
+            {
+                return;
+            }
+
+            if (Variables.FirstOrDefault(x => x.Value.Address == pointer).Value is Variable variable)
+            {
+                variable.Value = value;
+            }
+            else if (Arrays.FirstOrDefault(x => x.Value.Address == pointer).Value is Array array)
+            {
+                array.Value = (object[]?)value;
+            }
+        }
     }
 
     internal class Variable
     {
+        public Variable()
+        {
+            long latestAddress = VariableManagement.Variables.Count + VariableManagement.Arrays.Count;
+            latestAddress++;
+            Address = latestAddress;
+        }
+
         internal FscRuntimeTypes RuntimeType { get; set; }
         internal object? Value { get; set; }
+        internal long Address { get; init; }
     }
 
     internal class Array
     {
+        public Array()
+        {
+            long latestAddress = VariableManagement.Variables.Count + VariableManagement.Arrays.Count;
+            latestAddress++;
+            Address = latestAddress;
+        }
+
         internal FscRuntimeTypes RuntimeType { get; set; }
         internal object[]? Value { get; set; }
+        internal long Address { get; init; }
     }
 }

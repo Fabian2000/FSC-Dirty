@@ -52,7 +52,17 @@ namespace FSC.Dirty.Runtime
                     });
                     continue;
                 }
-                else if (_code[i].StartsWith("set") && _code[i].Split(' ')[2] != "at")
+                else if (_code[i].StartsWith("pointer"))
+                {
+                    string name = _code[i].Split(' ')[1];
+                    if (VariableManagement.Exists(name)) throw new Exception($"Pointer [{name}] in line [{i}] already exists");
+                    VariableManagement.Variables.Add(name, new Variable
+                    {
+                        RuntimeType = FscRuntimeTypes.Pointer,
+                    });
+                    continue;
+                }
+                else if (_code[i].StartsWith("set") && _code[i].Split(' ')[2] != "at") // Variable
                 {
                     string name = _code[i].Split(' ')[1];
 
@@ -60,18 +70,42 @@ namespace FSC.Dirty.Runtime
 
                     string value = _code[i].Substring(_code[i].IndexOf(" ", 4) + 1);
 
-                    if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\"") && !Regex.IsMatch(value, @"^(\d+.\d+|\d+)$"))
+                    if (value.StartsWith("&") && Regex.IsMatch(value, @"[a-zA-Z_][a-zA-Z0-9_]+")) // Set Pointer to Variable or Array
                     {
+                        if (VariableManagement.Variables.FirstOrDefault(x => x.Value.RuntimeType == FscRuntimeTypes.Pointer && (x.Value?.Value?.ToString() ?? string.Empty) == value) is KeyValuePair<string, Variable> variablePair)
+                        {
+                            VariableManagement.Variables[name].Value = variablePair.Value.Address;
+                        }
+                        else if (VariableManagement.Arrays.FirstOrDefault(x => x.Value.RuntimeType == FscRuntimeTypes.Pointer && (x.Value?.Value?.ToString() ?? string.Empty) == value) is KeyValuePair<string, Array> arrayPair)
+                        {
+                            VariableManagement.Variables[name].Value = arrayPair.Value.Address;
+                        }
+                        else
+                        {
+                            throw new Exception($"Pointer for [{value.Replace("&", "")}] in line [{i}] is not valid");
+                        }
+                    }
+                    else if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\"") && !Regex.IsMatch(value, @"^(\d+.\d+|\d+)$"))
+                    { // Set variable to variable
                         if (!VariableManagement.Variables.ContainsKey(value)) throw new Exception($"[{value}] in line [{i}] is not a variable");
 
                         Variable variable1 = VariableManagement.Variables[name];
                         Variable variable2 = VariableManagement.Variables[(value?.ToString() ?? "")];
 
+                        if (variable2.RuntimeType == FscRuntimeTypes.Pointer)
+                        {
+                            object? variable3 = VariableManagement.GetValueFromPointer(variable2.Value?.ToString() ?? string.Empty); // Get the original variable from the pointer
+
+                            if (variable3 is null) throw new Exception($"Pointer for [{value.Replace("&", "")}] in line [{i}] is not valid");
+
+                            variable2 = (Variable)variable3;
+                        }
+
                         if (variable1.RuntimeType != variable2.RuntimeType) throw new Exception($"Invalid cast in line [{i}]");
 
                         VariableManagement.Variables[name] = variable2;
                     }
-                    else
+                    else // Set a value to variable
                     {
                         if (WhichType(value?.ToString() ?? "") == VariableManagement.Variables[name].RuntimeType && VariableManagement.Variables[name].RuntimeType != FscRuntimeTypes.Void)
                         {
@@ -84,7 +118,7 @@ namespace FSC.Dirty.Runtime
                     }
                     continue;
                 }
-                else if (_code[i].StartsWith("set"))
+                else if (_code[i].StartsWith("set")) // Array
                 {
                     string name = _code[i].Split(' ')[1];
 
@@ -96,17 +130,26 @@ namespace FSC.Dirty.Runtime
                     value = value.Remove(0, value.IndexOf(" ", 4) + 1);
 
                     if (value.Length > 1 && !value.StartsWith("\"") && !value.EndsWith("\"") && !Regex.IsMatch(value, @"^(\d+.\d+|\d+)$"))
-                    {
+                    { // Set variable to array
                         if (!VariableManagement.Variables.ContainsKey(value)) throw new Exception($"[{value}] in line [{i}] is not a variable");
 
                         Array array = VariableManagement.Arrays[name];
                         Variable variable = VariableManagement.Variables[(value?.ToString() ?? "")];
 
+                        if (variable.RuntimeType == FscRuntimeTypes.Pointer && array.RuntimeType != FscRuntimeTypes.Pointer)
+                        {
+                            object? variable3 = VariableManagement.GetValueFromPointer(variable.Value?.ToString() ?? string.Empty); // Get the original variable from the pointer
+
+                            if (variable3 is null) throw new Exception($"Pointer for [{value.Replace("&", "")}] in line [{i}] is not valid");
+
+                            variable = (Variable)variable3;
+                        }
+
                         if (array.RuntimeType != variable.RuntimeType) throw new Exception($"Invalid cast in line [{i}]");
 
                         VariableManagement.Arrays[name].Value![index] = variable.Value!;
                     }
-                    else
+                    else // Set a value to array
                     {
                         if (WhichType(value?.ToString() ?? "") == VariableManagement.Arrays[name].RuntimeType && VariableManagement.Arrays[name].RuntimeType != FscRuntimeTypes.Void)
                         {

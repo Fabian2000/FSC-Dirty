@@ -82,10 +82,12 @@ namespace FSC.Dirty.Runtime
                 }
                 else if (line.StartsWith("set"))
                 {
-                    Match match = Regex.Match(line, KeywordRegex.Set1Keyword);
-                    Match match2 = Regex.Match(line, KeywordRegex.Set2Keyword);
+                    Match match = Regex.Match(line, KeywordRegex.SetArrayKeyword);
+                    Match match2 = Regex.Match(line, KeywordRegex.SetVarKeyword);
+                    Match match3 = Regex.Match(line, KeywordRegex.SetPointerKeyword);
                     if (match.Success) continue;
                     else if (match2.Success) continue;
+                    else if (match3.Success) continue;
                     else
                     {
                         throw new Exception($"Error in line [{count}] => {line}");
@@ -201,6 +203,11 @@ namespace FSC.Dirty.Runtime
         public (FscRuntimeTypes Type, object[]? Value) GetArray(string name)
         {
             return (VariableManagement.Arrays[name].RuntimeType, VariableManagement.Arrays[name].Value);
+        }
+
+        public object? PointerToObject(string name)
+        {
+            return VariableManagement.GetValueFromPointer(name);
         }
 
         public void Run()

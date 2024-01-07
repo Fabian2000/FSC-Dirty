@@ -4,8 +4,9 @@
     {
         internal const string VarKeyword = /* lang=regex */ @"^var\s[a-zA-Z_][a-zA-Z0-9_]*\s(void|text|char|number|bytes)$";
         internal const string ArrayKeyword = /* lang=regex */ @"^array\s[a-zA-Z_][a-zA-Z0-9_]*\s(void|text|char|number|bytes)\s\d*$";
-        internal const string Set1Keyword = /* lang=regex */ @"^set\s[a-zA-Z_][a-zA-Z0-9_]+\sat\s\d+\s((?!\\)""(.*?[^\\])""|\d+.\d+|\d|[a-zA-Z_][a-zA-Z0-9_]+)$";
-        internal const string Set2Keyword = /* lang=regex */ @"^set\s[a-zA-Z_][a-zA-Z0-9_]+\s((?!\\)""(.*?[^\\])""|\d+.\d+|\d|[a-zA-Z_][a-zA-Z0-9_]+)$";
+        internal const string SetArrayKeyword = /* lang=regex */ @"^set\s[a-zA-Z_][a-zA-Z0-9_]+\sat\s\d+\s((?!\\)""(.*?[^\\])""|(\d+\.\d+)|(\d+)|[a-zA-Z_][a-zA-Z0-9_]+)$";
+        internal const string SetVarKeyword = /* lang=regex */ @"^set\s[a-zA-Z_][a-zA-Z0-9_]+\s((?!\\)""(.*?[^\\])""|(\d+\.\d+)|(\d+)|(\*?)[a-zA-Z_][a-zA-Z0-9_]+)$";
+        internal const string SetPointerKeyword = /* lang=regex */ @"^set\s[a-zA-Z_][a-zA-Z0-9_]+\s&[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string JumpKeyword = /* lang=regex */ @"^jump\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string TargetKeyword = /* lang=regex */ @"^target\s[a-zA-Z_][a-zA-Z0-9_]+$";
         internal const string ExternKeyword = /* lang=regex */ @"^extern\s[a-zA-Z_][a-zA-Z0-9_]+\sfrom\s""[a-zA-Z_][a-zA-Z0-9_]+""(,\s[a-zA-Z_][a-zA-Z0-9_]+)*$";

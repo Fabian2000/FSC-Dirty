@@ -20,6 +20,10 @@
         /// <summary>
         /// Represents any number like 1, 2, 3.5, 3555,5889, ...
         /// </summary>
-        Number
+        Number,
+        /// <summary>
+        /// Pointer to a variable
+        /// </summary>>
+        Pointer,
     }
 }

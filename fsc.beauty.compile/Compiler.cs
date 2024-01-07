@@ -1,6 +1,4 @@
-﻿using fsc.beauty.compile;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text;
 
 namespace FSC.Beauty.Compile
 {

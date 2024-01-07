@@ -5,10 +5,17 @@ namespace FSC.Beauty.Compile
 {
     internal class Translator
     {
-        private List<string> _foundVariables = new List<string>();
+        private List<VarArrInfo> _foundVariables = new List<VarArrInfo>();
         private IFscCompiler _compilerInfo;
         private List<string> _code = new List<string>();
         private string _uniqueVariableName = string.Empty;
+
+        internal struct VarArrInfo
+        {
+            internal required string Name;
+            internal required bool IsArray;
+            internal required FscRuntimeTypes FscRuntimeType;
+        }
 
         public Translator(IFscCompiler compilerInfo, string uniqueVariablePrefix)
         {
@@ -38,13 +45,31 @@ namespace FSC.Beauty.Compile
                     string name = variable.Match(line).Groups[1].Value;
                     string value = variable.Match(line).Groups[4].Value;
                     
-                    WriteVariable(name, value, ArrayCheck(value));
+                    WriteVariable(name, value, ArrayCheck(ref value));
                 }
             }
         }
 
-        private (bool IsArray, FscRuntimeTypes FscRuntimeType) ArrayCheck(string value)
+        private (bool IsArray, FscRuntimeTypes FscRuntimeType) ArrayCheck(ref string value)
         {
+            Regex variable = new Regex("[A-Za-z0-9]+"); // Variable Check
+            if (variable.IsMatch(value))
+            {
+                string val = value;
+                VarArrInfo variableInfo = _foundVariables.Find(x => x.Name.Equals(_uniqueVariableName + val));
+                if (!variableInfo.Equals(default))
+                {
+                    if (variableInfo.IsArray)
+                    {
+                        return (true, variableInfo.FscRuntimeType);
+                    }
+                    else
+                    {
+                        return (false, variableInfo.FscRuntimeType);
+                    }
+                }
+            }
+
             if (value.StartsWith("\"") && value.EndsWith("\"")) // Text Check
             {
                 return (false, FscRuntimeTypes.Text);
@@ -57,22 +82,23 @@ namespace FSC.Beauty.Compile
             {
                 return (false, FscRuntimeTypes.Char);
             }
-            Regex method = new Regex("(.*)\\(.*\\)$");
+            
+            Regex method = new Regex("(.*)\\(.*\\)$"); // Method Check
             if (method.IsMatch(value))
             {
                 (FscRuntimeTypes fscRuntimeType, bool isArray) = _compilerInfo.MethodReturnTypes[method.Match(value).Groups[1].Value];
                 return (isArray, fscRuntimeType);
             }
             
-            if (Regex.IsMatch(value, @"\[\s*(("".*?""|\d+\s*:\s*text)\s*|"".*?"")\s*]"))
+            if (Regex.IsMatch(value, @"\[\s*(("".*?""|\d+\s*:\s*text)\s*|"".*?"")\s*]")) //Text Array Check
             {
                 return (true, FscRuntimeTypes.Text);
             }
-            else if (!Regex.IsMatch(value, @"\[\s*((\d+(\.\d+)?)(\s*,\s*\d+(\.\d+)?)*\s*(:\s*number)?)\s*]"))
+            else if (!Regex.IsMatch(value, @"\[\s*((\d+(\.\d+)?)(\s*,\s*\d+(\.\d+)?)*\s*(:\s*number)?)\s*]")) // Number Array Check
             {
                 return (true, FscRuntimeTypes.Number);
             }
-            else if (!Regex.IsMatch(value, @"\[\s*(('.*?'|\d+\s*:\s*char)\s*|'.*?')\s*]"))
+            else if (!Regex.IsMatch(value, @"\[\s*(('.*?'|\d+\s*:\s*char)\s*|'.*?')\s*]")) // Char Array Check
             {
                 return (true, FscRuntimeTypes.Char);
             }
@@ -80,34 +106,34 @@ namespace FSC.Beauty.Compile
             return (false, FscRuntimeTypes.Void);
         }
 
-        private void WriteVariable(string name, string value, (bool IsArray, FscRuntimeTypes FscRuntimeType) value2)
+        private void WriteVariable(string name, string value, (bool IsArray, FscRuntimeTypes FscRuntimeType) info)
         {
             string dirtyCode;
             string fullVariableName = _uniqueVariableName + name;
 
-            if (!_foundVariables.Contains(fullVariableName))
+            if (!_foundVariables.Find(x => x.Name.Equals(fullVariableName, StringComparison.OrdinalIgnoreCase)).Equals(default))
             {
-                _foundVariables.Add(fullVariableName);
+                _foundVariables.Add(new VarArrInfo { Name = fullVariableName, IsArray = info.IsArray, FscRuntimeType = info.FscRuntimeType });
 
-                if (value2.IsArray)
+                if (info.IsArray)
                 {
-                    int arraySize = CalculateArraySize(value, value2.FscRuntimeType);
-                    dirtyCode = $"array {fullVariableName} {value2.FscRuntimeType.ToString().ToLower()} {arraySize}";
+                    int arraySize = CalculateArraySize(value, info.FscRuntimeType);
+                    dirtyCode = $"array {fullVariableName} {info.FscRuntimeType.ToString().ToLower()} {arraySize}";
                     _code.Insert(0, dirtyCode);
                     InitializeArray(fullVariableName, value, arraySize);
                 }
                 else
                 {
-                    dirtyCode = $"var {fullVariableName} {value2.FscRuntimeType.ToString().ToLower()}";
+                    dirtyCode = $"var {fullVariableName} {info.FscRuntimeType.ToString().ToLower()}";
                     _code.Insert(0, dirtyCode);
-                    dirtyCode = $"set {fullVariableName} {value}";
+                    dirtyCode = $"set {fullVariableName} {value.SingleTrim('\'')}";
                     _code.Add(dirtyCode);
                 }
             }
-            else if (value2.IsArray)
+            else if (info.IsArray)
             {
                 // Setze Array-Werte, falls die Variable bereits initialisiert wurde
-                InitializeArray(fullVariableName, value, CalculateArraySize(value, value2.FscRuntimeType));
+                InitializeArray(fullVariableName, value, CalculateArraySize(value, info.FscRuntimeType));
             }
         }
 
