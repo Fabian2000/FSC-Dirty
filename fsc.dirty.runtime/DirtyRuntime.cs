@@ -205,9 +205,16 @@ namespace FSC.Dirty.Runtime
             return (VariableManagement.Arrays[name].RuntimeType, VariableManagement.Arrays[name].Value);
         }
 
-        public object? PointerToObject(string name)
+        public object? PointerToObject(int address)
         {
-            return VariableManagement.GetValueFromPointer(name);
+            if (VariableManagement.Variables.FirstOrDefault(x => x.Value.Address == address).Value is Variable variable)
+            {
+                return variable.Value;
+            }
+            else
+            {
+                return VariableManagement.Arrays.FirstOrDefault(x => x.Value.Address == address).Value.Value;
+            }
         }
 
         public void Run()
