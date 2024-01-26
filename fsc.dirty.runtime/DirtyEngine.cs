@@ -327,9 +327,9 @@ namespace FSC.Dirty.Runtime
                         throw new Exception($"{method}() => is not a valid extern method in line [{i}]");
                     }
 
-                    (FscRuntimeTypes type, object? @return) = _runtimeDefaults.ExternCallMethods[method](objArgs.ToArray());
+                    object? @return = _runtimeDefaults.ExternCallMethods[method](objArgs.ToArray());
 
-                    if (VariableManagement.Variables.ContainsKey(result) && VariableManagement.Variables[result].RuntimeType == type)
+                    if (VariableManagement.Variables.ContainsKey(result))
                     {
                         if (@return is null)
                         {
@@ -339,7 +339,7 @@ namespace FSC.Dirty.Runtime
                         VariableManagement.Variables[result].Value = @return;
                         continue;
                     }
-                    else if (VariableManagement.Arrays.ContainsKey(result) && VariableManagement.Arrays[result].RuntimeType == type)
+                    else if (VariableManagement.Arrays.ContainsKey(result))
                     {
                         if (@return is null)
                         {

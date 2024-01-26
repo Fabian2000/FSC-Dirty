@@ -29,8 +29,8 @@ namespace FSC.Beauty.Compile
 
             _code = _code.Select(x => x.ReplaceLineEndings("")).ToList();
 
-            Translator translator = new Translator();
-            outputCode = translator.Translate(_code);
+            Translator translator = new Translator("test");
+            outputCode = string.Join('\n', translator.Translate(_code));
         }
 
         private void RemoveComments()

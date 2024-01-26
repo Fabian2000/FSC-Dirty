@@ -14,31 +14,31 @@ namespace FSC.Dirty
             {
                 object arg = args[0];
                 Console.WriteLine((string)arg);
-                return (FscRuntimeTypes.Void, null);
+                return null;
             });
 
             ExternCallMethods.Add("ReadLine", (object[] args) =>
             {
-                return (FscRuntimeTypes.Text, Console.ReadLine());
+                return Console.ReadLine();
             });
 
             ExternCallMethods.Add("Clear", (object[] args) =>
             {
                 Console.Clear();
-                return (FscRuntimeTypes.Void, null);
+                return null;
             });
 
             ExternCallMethods.Add("Pause", (object[] args) =>
             {
                 Console.ReadKey(true);
-                return (FscRuntimeTypes.Void, null);
+                return null;
             });
 
             ExternCallMethods.Add("Title", (object[] args) =>
             {
                 object arg = args[0];
                 Console.Title = $"{arg}";
-                return (FscRuntimeTypes.Void, null);
+                return null;
             });
         }
     }

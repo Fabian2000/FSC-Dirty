@@ -1,6 +1,6 @@
 ﻿namespace FSC.Dirty.Runtime.Template
 {
-    public delegate (FscRuntimeTypes type, object? value) ExternFunction(params object[] parameters);
+    public delegate object? ExternFunction(params object[] parameters);
 
     public class CallMethodDictionary : Dictionary<string, ExternFunction>
     {

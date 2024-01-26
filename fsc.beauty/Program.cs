@@ -8,11 +8,9 @@ namespace fsc.beauty
         {
             Compiler compiler = new Compiler();
             compiler.Compile(@"
-text halloWelt = ""Hello, World!""
-text[] halloWeltArray[5]
-halloWeltArray[0] = ""Hello""
-halloWeltArray[1] = ""World""
-halloWeltArray[2] = ""!""
+text input = extern ReadLine()
+extern Clear()
+extern WriteLine(input)
 ", out string outputCode);
             Console.WriteLine(outputCode);
             Console.ReadKey(false);

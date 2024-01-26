@@ -1,12 +1,13 @@
-﻿using FSC.Dirty.Runtime.Template;
+﻿using fsc.beauty.compile;
+using FSC.Dirty.Runtime.Template;
 using System.Text.RegularExpressions;
+using static fsc.beauty.compile.ValidationRegex;
 
 namespace FSC.Beauty.Compile
 {
     internal class Translator
     {
         private List<VarArrInfo> _foundVariables = new List<VarArrInfo>();
-        private IFscCompiler _compilerInfo;
         private List<string> _code = new List<string>();
         private string _uniqueVariableName = string.Empty;
 
@@ -17,9 +18,8 @@ namespace FSC.Beauty.Compile
             internal required FscRuntimeTypes FscRuntimeType;
         }
 
-        public Translator(IFscCompiler compilerInfo, string uniqueVariablePrefix)
+        public Translator(string uniqueVariablePrefix)
         {
-            _compilerInfo = compilerInfo;
             _uniqueVariableName = uniqueVariablePrefix;
         }
 
@@ -34,162 +34,373 @@ namespace FSC.Beauty.Compile
             {
                 string line = code[i];
 
-                if (!string.IsNullOrEmpty(line))
+                if (string.IsNullOrEmpty(line))
                 {
                     continue;
                 }
 
-                Regex variable = new Regex(@"^([A-Za-z0-9]*)(\s)*=(\s)*(.+)$");
-                if (variable.IsMatch(line))
+                if (ValidationRegex.Get(ValidationRegexTypes.NewVariable, i).IsMatch(line))
                 {
-                    string name = variable.Match(line).Groups[1].Value;
-                    string value = variable.Match(line).Groups[4].Value;
-                    
-                    WriteVariable(name, value, ArrayCheck(ref value));
+                    NewVariable(line, i);
+                    continue;
                 }
-            }
-        }
-
-        private (bool IsArray, FscRuntimeTypes FscRuntimeType) ArrayCheck(ref string value)
-        {
-            Regex variable = new Regex("[A-Za-z0-9]+"); // Variable Check
-            if (variable.IsMatch(value))
-            {
-                string val = value;
-                VarArrInfo variableInfo = _foundVariables.Find(x => x.Name.Equals(_uniqueVariableName + val));
-                if (!variableInfo.Equals(default))
+                else if (ValidationRegex.Get(ValidationRegexTypes.SetVariable, i).IsMatch(line))
                 {
-                    if (variableInfo.IsArray)
-                    {
-                        return (true, variableInfo.FscRuntimeType);
-                    }
-                    else
-                    {
-                        return (false, variableInfo.FscRuntimeType);
-                    }
+                    SetVariable(line);
+                    continue;
                 }
-            }
-
-            if (value.StartsWith("\"") && value.EndsWith("\"")) // Text Check
-            {
-                return (false, FscRuntimeTypes.Text);
-            }
-            else if (Regex.IsMatch(value, "^([0-9]+|[0-9.]+)$")) // Number Check
-            {
-                return (false, FscRuntimeTypes.Number);
-            }
-            else if (Regex.IsMatch(value, "^'.'$")) // Char Check
-            {
-                return (false, FscRuntimeTypes.Char);
-            }
-            
-            Regex method = new Regex("(.*)\\(.*\\)$"); // Method Check
-            if (method.IsMatch(value))
-            {
-                (FscRuntimeTypes fscRuntimeType, bool isArray) = _compilerInfo.MethodReturnTypes[method.Match(value).Groups[1].Value];
-                return (isArray, fscRuntimeType);
-            }
-            
-            if (Regex.IsMatch(value, @"\[\s*(("".*?""|\d+\s*:\s*text)\s*|"".*?"")\s*]")) //Text Array Check
-            {
-                return (true, FscRuntimeTypes.Text);
-            }
-            else if (!Regex.IsMatch(value, @"\[\s*((\d+(\.\d+)?)(\s*,\s*\d+(\.\d+)?)*\s*(:\s*number)?)\s*]")) // Number Array Check
-            {
-                return (true, FscRuntimeTypes.Number);
-            }
-            else if (!Regex.IsMatch(value, @"\[\s*(('.*?'|\d+\s*:\s*char)\s*|'.*?')\s*]")) // Char Array Check
-            {
-                return (true, FscRuntimeTypes.Char);
-            }
-
-            return (false, FscRuntimeTypes.Void);
-        }
-
-        private void WriteVariable(string name, string value, (bool IsArray, FscRuntimeTypes FscRuntimeType) info)
-        {
-            string dirtyCode;
-            string fullVariableName = _uniqueVariableName + name;
-
-            if (!_foundVariables.Find(x => x.Name.Equals(fullVariableName, StringComparison.OrdinalIgnoreCase)).Equals(default))
-            {
-                _foundVariables.Add(new VarArrInfo { Name = fullVariableName, IsArray = info.IsArray, FscRuntimeType = info.FscRuntimeType });
-
-                if (info.IsArray)
+                else if (ValidationRegex.Get(ValidationRegexTypes.NewArray, i).IsMatch(line))
                 {
-                    int arraySize = CalculateArraySize(value, info.FscRuntimeType);
-                    dirtyCode = $"array {fullVariableName} {info.FscRuntimeType.ToString().ToLower()} {arraySize}";
-                    _code.Insert(0, dirtyCode);
-                    InitializeArray(fullVariableName, value, arraySize);
+                    NewArray(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.SetArray, i).IsMatch(line))
+                {
+                    SetArray(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.SetArrayIndex, i).IsMatch(line))
+                {
+                    SetArrayIndex(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.NewExternFunctionVariable, i).IsMatch(line))
+                {
+                    NewExternFunctionVariable(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.SetExternFunctionVariable, i).IsMatch(line))
+                {
+                    SetExternFunctionVariable(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.CallExternFunction, i).IsMatch(line))
+                {
+                    CallExternFunction(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.GoTo, i).IsMatch(line))
+                {
+                    GoTo(line, i);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.GoToTarget, i).IsMatch(line))
+                {
+                    GoToTarget(line, i);
+                    continue;
                 }
                 else
                 {
-                    dirtyCode = $"var {fullVariableName} {info.FscRuntimeType.ToString().ToLower()}";
-                    _code.Insert(0, dirtyCode);
-                    dirtyCode = $"set {fullVariableName} {value.SingleTrim('\'')}";
-                    _code.Add(dirtyCode);
+                    throw new($"Invalid line {i}: {line}");
                 }
             }
-            else if (info.IsArray)
+
+            return _code;
+        }
+
+        private void NewVariable(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.NewVariable, row).Match(line);
+            var type = match.Groups[1].Value;
+            var name = match.Groups[2].Value;
+            var value = match.Groups[3].Value;
+
+            if (type == "var")
             {
-                // Setze Array-Werte, falls die Variable bereits initialisiert wurde
-                InitializeArray(fullVariableName, value, CalculateArraySize(value, info.FscRuntimeType));
+                type = GetVariableType(value);
+            }
+
+            if (type == "variable")
+            {
+                type = _foundVariables.First(v => v.Name == value).FscRuntimeType.ToString().ToLower();
+            }
+
+            if (_foundVariables.Any(v => v.Name == name))
+            {
+                throw new($"Variable {name} in line {row} already exists");
+            }
+
+            _foundVariables.Add(new VarArrInfo
+            {
+                Name = name,
+                IsArray = false,
+                FscRuntimeType = type switch
+                {
+                    "text" => FscRuntimeTypes.Text,
+                    "number" => FscRuntimeTypes.Number,
+                    "char" => FscRuntimeTypes.Char,
+                    "void" => FscRuntimeTypes.Void,
+                    _ => throw new($"Invalid type {type} in line {row}")
+                }
+            });
+
+            _code.Insert(0, $"var {name} {type}");
+            _code.Add($"set {name} {value}");
+        }
+
+        private void SetVariable(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.SetVariable, row).Match(line);
+            var name = match.Groups[1].Value;
+            var value = match.Groups[2].Value;
+
+            if (!_foundVariables.Any(v => v.Name == name))
+            {
+                throw new($"Variable {name} in line {row} already exists");
+            }
+
+            var foundVariable = _foundVariables.First(v => v.Name == name);
+            
+            if (foundVariable.IsArray)
+            {
+                throw new($"Variable {name} in line {row} may not be an array");
+            }
+
+            _code.Add($"set {name} {value}");
+        }
+
+        private void NewArray(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.NewArray, row).Match(line);
+            var type = match.Groups[1].Value;
+            var name = match.Groups[2].Value;
+            var value = ValidationRegex.SplitArguments(match.Groups[4].Value);
+
+            if (type == "var")
+            {
+                type = GetVariableType(value[0]);
+            }
+
+            if (!value.All(v => GetVariableType(v) == type))
+            {
+                throw new($"Invalid value {value} in line {row}");
+            }
+
+            if (_foundVariables.Any(v => v.Name == name))
+            {
+                throw new($"Array {name} in line {row} already exists");
+            }
+
+            _foundVariables.Add(new VarArrInfo
+            {
+                Name = name,
+                IsArray = true,
+                FscRuntimeType = type switch
+                {
+                    "text" => FscRuntimeTypes.Text,
+                    "number" => FscRuntimeTypes.Number,
+                    "char" => FscRuntimeTypes.Char,
+                    _ => throw new($"Invalid type {type} in line {row}")
+                }
+            });
+
+            _code.Insert(0, $"array {name} {type} {value.Count()}");
+            
+            for (int i = 0; i < value.Count(); i++)
+            {
+                _code.Add($"set {name} at {i} {value[i]}");
             }
         }
 
-        private int CalculateArraySize(string arrayInitialization, FscRuntimeTypes type)
+        private void SetArray(string line, long row)
         {
-            if (type == FscRuntimeTypes.Number)
+            Match match = ValidationRegex.Get(ValidationRegexTypes.SetArray, row).Match(line);
+            var type = string.Empty;
+            var name = match.Groups[1].Value;
+            var value = ValidationRegex.SplitArguments(match.Groups[3].Value);
+
+            if (!_foundVariables.Any(v => v.Name == name))
             {
-                // Für Number, zähle einfach die Kommas und addiere 1
-                return arrayInitialization.Count(c => c == ',') + 1;
+                throw new($"Array {name} in line {row} does not exists");
             }
 
-            int arraySize = 0;
-            bool inElement = false;
-            char elementStartChar = type == FscRuntimeTypes.Char ? '\'' : '\"';
+            var foundVariable = _foundVariables.First(v => v.Name == name);
+            type = foundVariable.FscRuntimeType.ToString().ToLower();
 
-            foreach (char c in arrayInitialization)
+            if (!foundVariable.IsArray)
             {
-                if (c == elementStartChar && !inElement)
-                {
-                    inElement = true;
-                }
-                else if (c == elementStartChar && inElement)
-                {
-                    inElement = false;
-                    arraySize++; // Ende eines Elements
-                }
-                else if (c == ',' && !inElement)
-                {
-                    // Für Text und Char, erhöhe die Größe nur, wenn das Komma außerhalb eines Elements ist
-                    arraySize++;
-                }
+                throw new($"Array {name} in line {row} may not be a variable");
             }
 
-            return arraySize;
+            if (!value.All(v => GetVariableType(v) == type))
+            {
+                throw new($"Invalid value {value} in line {row}");
+            }
+
+            for (int i = 0; i < value.Count(); i++)
+            {
+                _code.Add($"set {name} at {i} {value[i]}");
+            }
         }
 
-        private void InitializeArray(string arrayName, string initialValue, int size)
+        private void SetArrayIndex(string line, long row)
         {
-            string targetLoopStart = $"loopStart_{arrayName}";
-            string targetLoopEnd = $"loopEnd_{arrayName}";
-            string indexVariable = $"{arrayName}_index";
+            Match match = ValidationRegex.Get(ValidationRegexTypes.SetArrayIndex, row).Match(line);
+            var type = string.Empty;
+            var name = match.Groups[1].Value;
+            var index = match.Groups[2].Value;
+            var value = match.Groups[3].Value;
 
-            _code.Add($"var {indexVariable} number");
-            _code.Add($"set {indexVariable} 0");
-            _code.Add($"target {targetLoopStart}");
+            if (!_foundVariables.Any(v => v.Name == name))
+            {
+                throw new($"Array {name} in line {row} does not exists");
+            }
 
-            _code.Add($"equals {indexVariable} {indexVariable} {size}");
-            _code.Add($"is {indexVariable} {targetLoopEnd}");
+            var foundVariable = _foundVariables.First(v => v.Name == name);
+            type = foundVariable.FscRuntimeType.ToString().ToLower();
 
-            _code.Add($"set {arrayName} at {indexVariable} {initialValue}");
+            if (!foundVariable.IsArray)
+            {
+                throw new($"Array {name} in line {row} may not be a variable");
+            }
 
-            // Externe Methode Plus einbinden, um den Index zu erhöhen
-            _code.Add($"extern {indexVariable} from \"Plus\", {indexVariable}, 1");
+            if (GetVariableType(value) != type)
+            {
+                throw new($"Invalid value {value} in line {row}");
+            }
+            
+            _code.Add($"set {name} at {index} {value}");
+        }
 
-            _code.Add($"jump {targetLoopStart}");
-            _code.Add($"target {targetLoopEnd}");
+        private void NewExternFunctionVariable(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.NewExternFunctionVariable, row).Match(line);
+            var type = match.Groups[1].Value;
+            var name = match.Groups[2].Value;
+            var function = match.Groups[3].Value;
+            var args = ValidationRegex.SplitArguments(match.Groups[4].Value);
+
+            if (type == "var")
+            {
+                throw new($"Function return variable type may not be var in line {row}");
+            }
+
+            if (_foundVariables.Any(v => v.Name == name))
+            {
+                throw new($"Variable {name} in line {row} already exists");
+            }
+
+            _foundVariables.Add(new VarArrInfo
+            {
+                Name = name,
+                IsArray = false,
+                FscRuntimeType = type switch
+                {
+                    "text" => FscRuntimeTypes.Text,
+                    "number" => FscRuntimeTypes.Number,
+                    "char" => FscRuntimeTypes.Char,
+                    "void" => FscRuntimeTypes.Void,
+                    _ => throw new($"Invalid type {type} in line {row}")
+                }
+            });
+
+            _code.Insert(0, $"var {name} {type}");
+            List<string> argVariables = new List<string>();
+
+            for (int i = 0; i < args.Count(); i++)
+            {
+                //_code.Add($""); // TODO: Put all values into variables. Not needed, if already a variable or array.
+                if (_foundVariables.Any(v => v.Name == args[i]))
+                {
+                    argVariables.Add(args[i]);
+                    continue;
+                }
+
+                var variableName = $"{_uniqueVariableName}COMPILER{name}ARG{i}";
+
+                if (!string.IsNullOrWhiteSpace(args[i]))
+                {
+                    NewVariable($"var {variableName} = {args[i]}", row);
+                    argVariables.Add(variableName);
+                }
+            }
+
+            string argSplitter = argVariables.Any() ? "," : string.Empty;
+
+            _code.Add($"extern {name} from \"{function}\"{argSplitter} {string.Join(", ", argVariables)}");
+        }
+
+        private void SetExternFunctionVariable(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.SetExternFunctionVariable, row).Match(line);
+            var name = match.Groups[1].Value;
+            var function = match.Groups[2].Value;
+            var args = ValidationRegex.SplitArguments(match.Groups[3].Value);
+
+            if (!_foundVariables.Any(v => v.Name == name))
+            {
+                throw new($"Variable {name} in line {row} doesn't exists");
+            }
+
+            List<string> argVariables = new List<string>();
+
+            for (int i = 0; i < args.Count(); i++)
+            {
+                //_code.Add($""); // TODO: Put all values into variables. Not needed, if already a variable or array.
+                if (_foundVariables.Any(v => v.Name == args[i]))
+                {
+                    argVariables.Add(args[i]);
+                    continue;
+                }
+
+                var variableName = $"{_uniqueVariableName}COMPILER{name}ARG{i}";
+
+                if (!string.IsNullOrWhiteSpace(args[i]))
+                {
+                    NewVariable($"var {variableName} = {args[i]}", row);
+                    argVariables.Add(variableName);
+                }
+            }
+
+            string argSplitter = argVariables.Any() ? "," : string.Empty;
+
+            _code.Add($"extern {name} from \"{function}\"{argSplitter} {string.Join(", ", argVariables)}");
+        }
+
+        private void CallExternFunction(string line, long row)
+        {
+            string name = $"{_uniqueVariableName}COMPILERvoidFUNCTION{row}";
+            NewExternFunctionVariable($"void {name} = {line}", row);
+        }
+
+        private string GetVariableType(string value)
+        {
+            if (value.StartsWith('"') && value.EndsWith('"'))
+            {
+                return "text";
+            }
+            else if (value.Contains('.'))
+            {
+                return "number";
+            }
+            else if (int.TryParse(value, out int _))
+            {
+                return "number";
+            }
+            else if (value.StartsWith("'") && value.EndsWith("'"))
+            {
+                return "char";
+            }
+            else
+            {
+                return "variable";
+            }
+        }
+
+        private void GoTo(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.GoTo, row).Match(line);
+            var jumpPoint = match.Groups[1].Value;
+
+            _code.Add($"jump {jumpPoint}");
+        }
+
+        private void GoToTarget(string line, long row)
+        {
+            Match match = ValidationRegex.Get(ValidationRegexTypes.GoToTarget, row).Match(line);
+            var jumpPoint = match.Groups[1].Value;
+
+            _code.Add($"{jumpPoint}:");
         }
     }
 }
