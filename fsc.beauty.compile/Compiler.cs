@@ -7,6 +7,8 @@ namespace FSC.Beauty.Compile
         private List<string> _code = new List<string>();
         private List<string> _compiledCode = new List<string>();
 
+        private static int _uniqueId = 0;
+
         public void Compile(string inputCode, out string outputCode)
         {
             outputCode = string.Empty;
@@ -29,7 +31,8 @@ namespace FSC.Beauty.Compile
 
             _code = _code.Select(x => x.ReplaceLineEndings("")).ToList();
 
-            Translator translator = new Translator("test");
+            Translator translator = new Translator("FscBeauty" + _uniqueId++);
+            RemoveComments();
             outputCode = string.Join('\n', translator.Translate(_code));
         }
 

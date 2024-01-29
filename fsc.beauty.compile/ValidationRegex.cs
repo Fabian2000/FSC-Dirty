@@ -20,6 +20,7 @@ namespace fsc.beauty.compile
                 ValidationRegexTypes.GoTo => new Regex(@"^\s*goto\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$"),
                 ValidationRegexTypes.GoToTarget => new Regex(@"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*$"),
                 ValidationRegexTypes.IfStatement => new Regex(@"^\s*if\s\s*(.*)\s*$"),
+                ValidationRegexTypes.WhileStatement => new Regex(@"^\s*while\s\s*(.*)\s*$"),
                 _ => throw new($"Invalid code in line {line}")
             };
         }
@@ -107,6 +108,7 @@ namespace fsc.beauty.compile
             GoTo,
             GoToTarget,
             IfStatement,
+            WhileStatement
         }
     }
 }

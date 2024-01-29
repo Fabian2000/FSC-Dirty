@@ -269,7 +269,7 @@ namespace FSC.Dirty.Runtime
 
                     if (VariableManagement.Variables[name].RuntimeType != FscRuntimeTypes.Number) throw new Exception($"Variable {name} must be a number in line {i}");
 
-                    if ((int)VariableManagement.Variables[name].Value! == 1)
+                    if (Convert.ToInt32(VariableManagement.Variables[name].Value!) == 1)
                     {
                         i = FindTarget(_code[i].Split(' ')[2]);
                     }
@@ -295,25 +295,30 @@ namespace FSC.Dirty.Runtime
                 }
                 else if (_code[i].StartsWith("extern"))
                 {
-                    string[] splits = _code[i].Split(' ');
+                    string[] splits = Regex.Split(_code[i], @"\s|,");
                     string result = splits[1];
                     string method = splits[3].TrimEnd(',').Trim('"');
                     string[] args = splits.Skip(4).ToArray();
+                    
                     List<object> objArgs = new List<object>();
 
                     foreach (string arg in args)
                     {
-                        if (VariableManagement.Variables.ContainsKey(arg))
+                        string argCopy = arg.TrimEnd(',').TrimEnd(' ');
+
+                        if (string.IsNullOrWhiteSpace(argCopy)) continue;
+
+                        if (VariableManagement.Variables.ContainsKey(argCopy))
                         {
-                            objArgs.Add(VariableManagement.Variables[arg].Value!);
+                            objArgs.Add(VariableManagement.Variables[argCopy].Value!);
                         }
-                        else if (VariableManagement.Arrays.ContainsKey(arg))
+                        else if (VariableManagement.Arrays.ContainsKey(argCopy))
                         {
-                            objArgs.Add(VariableManagement.Arrays[arg].Value!);
+                            objArgs.Add(VariableManagement.Arrays[argCopy].Value!);
                         }
                         else
                         {
-                            throw new Exception($"{arg} is not a valid variable or array in line [{i}]");
+                            throw new Exception($"{argCopy} is not a valid variable or array in line [{i}]");
                         }
                     }
 

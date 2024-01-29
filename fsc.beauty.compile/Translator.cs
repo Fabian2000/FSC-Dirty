@@ -39,6 +39,17 @@ namespace FSC.Beauty.Compile
                     continue;
                 }
 
+                // If condition found, make conditional operation to variable
+                if (line.Contains("==") || line.Contains("<") || line.Contains(">") || line.Contains("!=") || line.Contains(">=") || line.Contains("<="))
+                {
+                    int startIndex = line.Contains("if ") ? line.IndexOf("if ") + "if ".Length : line.IndexOf('=') + 1;
+                    string valueSplit = line.Substring(startIndex).Trim();
+
+                    string variableName = ConditionalOperationToVariable(valueSplit, i);
+
+                    line = line.Replace(valueSplit, variableName);
+                }
+
                 if (ValidationRegex.Get(ValidationRegexTypes.NewVariable, i).IsMatch(line))
                 {
                     NewVariable(line, i);
@@ -46,7 +57,7 @@ namespace FSC.Beauty.Compile
                 }
                 else if (ValidationRegex.Get(ValidationRegexTypes.SetVariable, i).IsMatch(line))
                 {
-                    SetVariable(line);
+                    SetVariable(line, i);
                     continue;
                 }
                 else if (ValidationRegex.Get(ValidationRegexTypes.NewArray, i).IsMatch(line))
@@ -89,6 +100,21 @@ namespace FSC.Beauty.Compile
                     GoToTarget(line, i);
                     continue;
                 }
+                else if (ValidationRegex.Get(ValidationRegexTypes.IfStatement, i).IsMatch(line))
+                {
+                    IfStatement(line, i, ref code);
+                    continue;
+                }
+                else if (ValidationRegex.Get(ValidationRegexTypes.WhileStatement, i).IsMatch(line))
+                {
+                    IfStatement(line, i, ref code, true);
+                    continue;
+                }
+                else if (line.StartsWith("raw "))
+                {
+                    Raw(line, i);
+                    continue;
+                }
                 else
                 {
                     throw new($"Invalid line {i}: {line}");
@@ -102,7 +128,7 @@ namespace FSC.Beauty.Compile
         {
             Match match = ValidationRegex.Get(ValidationRegexTypes.NewVariable, row).Match(line);
             var type = match.Groups[1].Value;
-            var name = match.Groups[2].Value;
+            var name = PrefixVar(match.Groups[2].Value);
             var value = match.Groups[3].Value;
 
             if (type == "var")
@@ -112,7 +138,14 @@ namespace FSC.Beauty.Compile
 
             if (type == "variable")
             {
-                type = _foundVariables.First(v => v.Name == value).FscRuntimeType.ToString().ToLower();
+                try
+                {
+                    type = _foundVariables.First(v => v.Name == value).FscRuntimeType.ToString().ToLower();
+                }
+                catch
+                {
+                    type = _foundVariables.First(v => v.Name == PrefixVar(value)).FscRuntimeType.ToString().ToLower();
+                }
             }
 
             if (_foundVariables.Any(v => v.Name == name))
@@ -141,7 +174,7 @@ namespace FSC.Beauty.Compile
         private void SetVariable(string line, long row)
         {
             Match match = ValidationRegex.Get(ValidationRegexTypes.SetVariable, row).Match(line);
-            var name = match.Groups[1].Value;
+            var name = PrefixVar(match.Groups[1].Value);
             var value = match.Groups[2].Value;
 
             if (!_foundVariables.Any(v => v.Name == name))
@@ -266,7 +299,7 @@ namespace FSC.Beauty.Compile
         {
             Match match = ValidationRegex.Get(ValidationRegexTypes.NewExternFunctionVariable, row).Match(line);
             var type = match.Groups[1].Value;
-            var name = match.Groups[2].Value;
+            var name = PrefixVar(match.Groups[2].Value);
             var function = match.Groups[3].Value;
             var args = ValidationRegex.SplitArguments(match.Groups[4].Value);
 
@@ -310,6 +343,11 @@ namespace FSC.Beauty.Compile
 
                 if (!string.IsNullOrWhiteSpace(args[i]))
                 {
+                    if (!Regex.IsMatch(args[i], @"^(""|\d|'')"))
+                    {
+                        args[i] = PrefixVar(args[i]);
+                    }
+
                     NewVariable($"var {variableName} = {args[i]}", row);
                     argVariables.Add(variableName);
                 }
@@ -317,13 +355,13 @@ namespace FSC.Beauty.Compile
 
             string argSplitter = argVariables.Any() ? "," : string.Empty;
 
-            _code.Add($"extern {name} from \"{function}\"{argSplitter} {string.Join(", ", argVariables)}");
+            _code.Add($"extern {name} from \"{function}\"{argSplitter} {string.Join(", ", argVariables)}".TrimEnd());
         }
 
         private void SetExternFunctionVariable(string line, long row)
         {
             Match match = ValidationRegex.Get(ValidationRegexTypes.SetExternFunctionVariable, row).Match(line);
-            var name = match.Groups[1].Value;
+            var name = PrefixVar(match.Groups[1].Value);
             var function = match.Groups[2].Value;
             var args = ValidationRegex.SplitArguments(match.Groups[3].Value);
 
@@ -347,6 +385,11 @@ namespace FSC.Beauty.Compile
 
                 if (!string.IsNullOrWhiteSpace(args[i]))
                 {
+                    if (!Regex.IsMatch(args[i], @"^(""|\d|'')"))
+                    {
+                        args[i] = PrefixVar(args[i]);
+                    }
+
                     NewVariable($"var {variableName} = {args[i]}", row);
                     argVariables.Add(variableName);
                 }
@@ -354,7 +397,7 @@ namespace FSC.Beauty.Compile
 
             string argSplitter = argVariables.Any() ? "," : string.Empty;
 
-            _code.Add($"extern {name} from \"{function}\"{argSplitter} {string.Join(", ", argVariables)}");
+            _code.Add($"extern {name} from \"{function}\"{argSplitter} {string.Join(", ", argVariables)}".TrimEnd());
         }
 
         private void CallExternFunction(string line, long row)
@@ -400,7 +443,139 @@ namespace FSC.Beauty.Compile
             Match match = ValidationRegex.Get(ValidationRegexTypes.GoToTarget, row).Match(line);
             var jumpPoint = match.Groups[1].Value;
 
-            _code.Add($"{jumpPoint}:");
+            _code.Add($"target {jumpPoint}");
+        }
+
+        private void IfStatement(string line, long row, ref List<string> code, bool isLoop = false)
+        {
+            line = Regex.Replace(line, @"^\s*while\s", m => m.Value.Replace("while", "if"));
+
+            Match match = ValidationRegex.Get(ValidationRegexTypes.IfStatement, row).Match(line);
+            var conditionalValue = PrefixVar(match.Groups[1].Value);
+
+            string variableName = $"{_uniqueVariableName}COMPILERIF{row}";
+            string endIf = EndIfStatement(variableName, row, ref code, isLoop, !isLoop ? "" : $"{variableName}STARTBEFORE");
+            NewVariable($"var {variableName} = {conditionalValue}", row);
+            string startIf = $"{variableName}START";
+            _code.Add($"target {startIf}BEFORE");
+            _code.Add($"is {variableName} {startIf}");
+            _code.Add($"jump {endIf}");
+            _code.Add($"target {startIf}");
+        }
+
+        private string EndIfStatement(string ifName, long lastRow, ref List<string> code, bool isLoop = false, string loopReceiver = "")
+        {
+            string afterIfLine = code[(int)(lastRow + 1)];
+            char spaces = afterIfLine[0];
+            int countSpaces = afterIfLine.TakeWhile(c => c == spaces).Count();
+
+            if (spaces != ' ' && spaces != '\t')
+            {
+                throw new($"Invalid if statement in line {lastRow}");
+            }
+
+            for (long i = lastRow + 1; i < code.Count; i++)
+            {
+                string line = code[(int)i];
+
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                if (line.TakeWhile(c => c == spaces).Count() < countSpaces)
+                {
+                    string endIfName = $"{_uniqueVariableName}COMPILERENDIF{lastRow}";
+                    code.Insert((int)i, $"{endIfName}:");
+
+                    if (isLoop)
+                    {
+                        code.Insert((int)i, $"raw jump {loopReceiver}");
+                    }
+
+                    return $"{endIfName}";
+                }
+            }
+
+            throw new($"Invalid if statement in line {lastRow}");
+        }
+
+        private string /* New Variable*/ ConditionalOperationToVariable(string value, long row)
+        {
+            string variableName = $"{_uniqueVariableName}COMPILEROPERATOR{row}";
+
+            string value1 = Regex.Split(value, @"==|<|>|!=|>=|<=|&&|\|\|")[0].Trim();
+            string value2 = Regex.Split(value, @"==|<|>|!=|>=|<=|&&|\|\|")[1].Trim();
+
+            NewVariable($"var {variableName}Temp1 = {PrefixVar(value1)}", row);
+            NewVariable($"var {variableName}Temp2 = {PrefixVar(value2)}", row);
+
+            return CalculateConditionalOperation($"{variableName}Temp1", $"{variableName}Temp2", Regex.Match(value, @"==|<|>|!=|>=|<=|&&|\|\|").Value, row);
+        }
+
+        private string /* New Variable */ CalculateConditionalOperation(string variable1, string variable2, string @operator, long row)
+        {
+            string returnVariableName = $"{_uniqueVariableName}COMPILEROPERATORResult{row}";
+            string variableGreater = $"{returnVariableName}Greater";
+            string variableLess = $"{returnVariableName}Less";
+            string variableFalse = $"{returnVariableName}False";
+            NewVariable($"var {returnVariableName} = 0", row);
+            switch (@operator)
+            {
+                case "==":
+                    _code.Add($"equals {returnVariableName} {variable1} {variable2}");
+                    break;
+                case "<":
+                    _code.Add($"less {returnVariableName} {variable1} {variable2}");
+                    break;
+                case ">":
+                    _code.Add($"greater {returnVariableName} {variable1} {variable2}");
+                    break;
+                case "!=":
+                    NewVariable($"var {variableGreater} = 0", row);
+                    NewVariable($"var {variableFalse} = 0", row);
+
+                    _code.Add($"greater {variableGreater} {variable1} {variable2}");
+                    _code.Add($"less {variableLess} {variable1} {variable2}");
+
+                    _code.Add($"or {returnVariableName} {variableLess} {variableGreater}");
+                    _code.Add($"equals {returnVariableName} {returnVariableName} {variableFalse}");
+                    break;
+                case ">=":
+                    NewVariable($"var {variableGreater} = 0", row);
+
+                    _code.Add($"greater {variableGreater} {variable1} {variable2}");
+                    _code.Add($"equals {returnVariableName} {variable1} {variable2}");
+                    _code.Add($"or {returnVariableName} {returnVariableName} {variableGreater}");
+                    break;
+                case "<=":
+                    NewVariable($"var {variableLess} = 0", row);
+
+                    _code.Add($"less {variableLess} {variable1} {variable2}");
+                    _code.Add($"equals {returnVariableName} {variable1} {variable2}");
+                    _code.Add($"or {returnVariableName} {returnVariableName} {variableLess}");
+                    break;
+                default:
+                    throw new($"Invalid conditional operator {@operator} in line {row}");
+            }
+
+            return returnVariableName;
+        }
+
+        private void Raw(string line, long row)
+        {
+            line = line.Substring("raw ".Length);
+            _code.Add(line);
+        }
+
+        private string PrefixVar(string @var)
+        {
+            if (@var.StartsWith(_uniqueVariableName))
+            {
+                return @var;
+            }
+
+            return $"{_uniqueVariableName}{var}";
         }
     }
 }
