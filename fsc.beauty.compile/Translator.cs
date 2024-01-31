@@ -28,7 +28,7 @@ namespace FSC.Beauty.Compile
             {
                 return code;
             }
-
+        
             for (int i = 0; i < code.Count; i++)
             {
                 string line = code[i];

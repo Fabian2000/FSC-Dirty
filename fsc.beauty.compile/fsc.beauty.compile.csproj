@@ -17,6 +17,7 @@
     <PackageIcon>FSC-Beauty-Logo-128.png</PackageIcon>
     <PackageTags>Script, Scripting, Programming, Language, Programminglanguage, Scriptlanguage, net, beauty, dirty, runtime, compiler, compile</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <IncludeSymbols>False</IncludeSymbols>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">

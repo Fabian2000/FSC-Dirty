@@ -7,6 +7,12 @@
     <Nullable>enable</Nullable>
 	<LangVersion>12</LangVersion>
 	<Version>1.0.0.0</Version>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PackageId>FSC-Dirty-Runtime</PackageId>
+	<Title>FSC-Dirty-Runtime</Title>
+	<Copyright>Copyright 2024 by Fabian Schlüter</Copyright>
+	<PackageProjectUrl>https://github.com/Fabian2000/FSC-Dirty</PackageProjectUrl>
+	<PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
@@ -32,6 +38,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
     <IsAotCompatible>True</IsAotCompatible>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\fsc.dirty.runtime.template\fsc.dirty.runtime.template.csproj" />
