@@ -5,7 +5,12 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>FSC-Beauty-Logo_Transparent.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="FSC-Beauty-Logo_Transparent.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\fsc.beauty.compile\fsc.beauty.compile.csproj" />
