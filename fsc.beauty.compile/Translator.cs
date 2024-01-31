@@ -407,7 +407,7 @@ namespace FSC.Beauty.Compile
 
         private string GetVariableType(string value)
         {
-            if (value.StartsWith('"') && value.EndsWith('"'))
+            if (value.StartsWith("\"") && value.EndsWith("\""))
             {
                 return "text";
             }
