@@ -848,6 +848,12 @@ namespace FSC.Dirty.Runtime
                 return null;
             });
 
+            ExternCallMethods.Add("ProcessExists", (object[] args) =>
+            {
+                string name = (string)args[0];
+                return Process.GetProcessesByName(name).Length > 0 ? 1 : 0;
+            });
+
             ExternCallMethods.Add("GetCurrentProcessId", (object[] args) =>
             {
                 return Convert.ToDouble(Process.GetCurrentProcess().Id);
