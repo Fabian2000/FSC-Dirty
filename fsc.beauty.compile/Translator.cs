@@ -9,6 +9,7 @@ namespace FSC.Beauty.Compile
         private List<VarArrInfo> _foundVariables = new List<VarArrInfo>();
         private List<string> _code = new List<string>();
         private string _uniqueVariableName = string.Empty;
+        private int _uniqueVariableIndex = 0;
 
         internal struct VarArrInfo
         {
@@ -338,7 +339,7 @@ namespace FSC.Beauty.Compile
                     continue;
                 }
 
-                var variableName = $"{_uniqueVariableName}COMPILER{name}ARG{i}";
+                var variableName = $"{_uniqueVariableName}COMPILER{name}ARG{i}{_uniqueVariableIndex++}";
 
                 if (!string.IsNullOrWhiteSpace(args[i]))
                 {
@@ -380,7 +381,7 @@ namespace FSC.Beauty.Compile
                     continue;
                 }
 
-                var variableName = $"{_uniqueVariableName}COMPILER{name}ARG{i}";
+                var variableName = $"{_uniqueVariableName}COMPILER{name}ARG{i}{_uniqueVariableIndex++}";
 
                 if (!string.IsNullOrWhiteSpace(args[i]))
                 {
@@ -452,7 +453,7 @@ namespace FSC.Beauty.Compile
             Match match = ValidationRegex.Get(ValidationRegexTypes.IfStatement, row).Match(line);
             var conditionalValue = PrefixVar(match.Groups[1].Value);
 
-            string variableName = $"{_uniqueVariableName}COMPILERIF{row}";
+            string variableName = $"{_uniqueVariableName}COMPILERIF{row}{_uniqueVariableIndex++}";
             string endIf = EndIfStatement(variableName, row, ref code, isLoop, !isLoop ? "" : $"{variableName}STARTBEFORE");
             NewVariable($"var {variableName} = {conditionalValue}", row);
             string startIf = $"{variableName}START";
