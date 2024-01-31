@@ -1,21 +1,80 @@
-# FSC-Dirty
-A userfriendly crossplatform scripting language built in C#
+# FSC.Beauty NuGet Package README
 
-## Why FSC-Dirty?
-FSC-Dirty is a dirty language. It is terrible to use.
+Welcome to the FSC.Beauty! This language is designed to help you easily integrate scripting into your .NET applications. Whether you are looking to add scripting capabilities to your existing project or create new, dynamic applications, FSC.Beauty offers a simple yet powerful solution.
 
-## Why is FSC-Beauty better?
-FSC-Beauty is a layer on top of FSC-Dirty and the compiler compiles to FSC-Dirty. If your plan is to write a script and not make your own language, you should use FSC-Beauty instead of FSC-Dirty. If your plan is to make your own programming language without caring about a runtime, FSC-Dirty is the go!
+## Features
+- **Integrate Scripting into .NET Applications**: Use FSC.Beauty to add scripting functionalities to your .NET applications.
+- **Custom Functionality**: Easily extend the language with your own functions.
+- **Cross-Platform Support**: Compatible with various .NET-supported platforms.
+- **Simple Syntax**: FSC.Beauty's easy-to-understand syntax makes scripting accessible for all levels of developers.
 
-## Goal of FSC-Dirty
-The goal of FSC-Dirty is to be a programming language, that a computer can work with really quick. It was made, so that you are able to build your own programming language, without caring about how to make it run.
-You only need to compile your programming / scripting language to FSC-Dirty and use the runtime to make it work.
-That's it. A pretty project for people that want their own language
+## Getting Started
 
-## Goal of FSC-Dirty
-A modern, but easy to use programming language to write small scripts or create plugins for your own software.
+### Usage
+Here's a basic example to get you started with using FSC.Beauty in your .NET application. This example demonstrates how to set up a simple script and integrate custom functions.
 
-## Can it run by itself, without building an own language on top of it?
-Sure it can! It is still a programming language. Simple, but fast and made for computers, not for people.
+#### Example Script
+```csharp
+using FSC.Beauty.Runtime;
+using FSC.Dirty.Runtime.Template;
+using System.Text;
 
-> Don't be scared of building your own programming / scripting language. Make it easy. Use FSC-Dirty
+namespace fsc.beauty
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            string code = @"
+extern Title(""Example Script"")
+
+extern WriteLine(""This script shows how you can write plugins with FSC.Beauty in your .NET Application including the call of own functions"")
+extern LongBeep(10)
+extern Pause()
+
+extern Exit(0)
+";
+            CustomFunctions customFunctions = new CustomFunctions();
+            customFunctions.LoadFunctions();
+            Runtime runtime = new Runtime(customFunctions);
+            runtime.AddScript(code);
+            runtime.Run();
+        }
+    }
+}
+
+public class CustomFunctions : IFscRuntime
+{
+    public bool UseDefaultTemplate => true;
+
+    public CallMethodDictionary ExternCallMethods { get; set; } = new CallMethodDictionary();
+
+    public void LoadFunctions()
+    {
+        ExternCallMethods.Add("LongBeep", (object[] args) =>
+        {
+            int name = Convert.ToInt32(args[0]);
+            StringBuilder beep = new StringBuilder("B");
+            for (int i = 0; i < name; i++)
+            {
+                beep.Append("e");
+            }
+            beep.Append("p");
+            Console.WriteLine(beep.ToString());
+            return null;
+        });
+    }
+}
+```
+
+In this example, we define a simple script that uses both built-in and custom functions. The `CustomFunctions` class demonstrates how you can extend the scripting functionalities by adding your own methods.
+
+### Documentation
+For more detailed documentation on using FSC.Beauty, including syntax guides and advanced features, please visit the Wiki on GitHub.
+
+## License
+FSC.Beauty is released under MIT License, allowing for wide-ranging use and modification.
+
+---
+
+Thank you for choosing FSC.Beauty for your .NET scripting needs. We look forward to seeing the innovative ways you use this package in your applications!
