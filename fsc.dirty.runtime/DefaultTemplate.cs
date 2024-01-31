@@ -1,5 +1,6 @@
 ﻿using FSC.Dirty.Runtime.Template;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -451,6 +452,12 @@ namespace FSC.Dirty.Runtime
                 return File.ReadAllText(path);
             });
 
+            ExternCallMethods.Add("ReadFileLine", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return File.ReadAllLines(path)[Convert.ToInt32(args[1])];
+            });
+
             ExternCallMethods.Add("WriteFile", (object[] args) =>
             {
                 string path = (string)args[0];
@@ -480,6 +487,46 @@ namespace FSC.Dirty.Runtime
                 return File.Exists(path) ? 1 : 0;
             });
 
+            ExternCallMethods.Add("GetFileLength", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return Convert.ToDouble(new FileInfo(path).Length);
+            });
+
+            ExternCallMethods.Add("GetFileCreationTime", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return File.GetCreationTime(path).ToString();
+            });
+
+            ExternCallMethods.Add("GetFileLastAccessTime", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return File.GetLastAccessTime(path).ToString();
+            });
+
+            ExternCallMethods.Add("GetFileLastWriteTime", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return File.GetLastWriteTime(path).ToString();
+            });
+
+            ExternCallMethods.Add("FileCopy", (object[] args) =>
+            {
+                string source = (string)args[0];
+                string destination = (string)args[1];
+                File.Copy(source, destination);
+                return null;
+            });
+
+            ExternCallMethods.Add("FileMove", (object[] args) =>
+            {
+                string source = (string)args[0];
+                string destination = (string)args[1];
+                File.Move(source, destination);
+                return null;
+            });
+
             ExternCallMethods.Add("CreateDirectory", (object[] args) =>
             {
                 string path = (string)args[0];
@@ -498,6 +545,40 @@ namespace FSC.Dirty.Runtime
             {
                 string path = (string)args[0];
                 return Directory.Exists(path) ? 1 : 0;
+            });
+
+            ExternCallMethods.Add("GetDirectoryCreationTime", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return Directory.GetCreationTime(path).ToString();
+            });
+
+            ExternCallMethods.Add("GetDirectoryLastAccessTime", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return Directory.GetLastAccessTime(path).ToString();
+            });
+
+            ExternCallMethods.Add("GetDirectoryLastWriteTime", (object[] args) =>
+            {
+                string path = (string)args[0];
+                return Directory.GetLastWriteTime(path).ToString();
+            });
+
+            ExternCallMethods.Add("DirectoryCopy", (object[] args) =>
+            {
+                string source = (string)args[0];
+                string destination = (string)args[1];
+                DirectoryCopy(source, destination);
+                return null;
+            });
+
+            ExternCallMethods.Add("DirectoryMove", (object[] args) =>
+            {
+                string source = (string)args[0];
+                string destination = (string)args[1];
+                Directory.Move(source, destination);
+                return null;
             });
 
             ExternCallMethods.Add("GetFiles", (object[] args) =>
@@ -561,6 +642,32 @@ namespace FSC.Dirty.Runtime
             {
                 string path = (string)args[0];
                 return Path.GetPathRoot(path);
+            });
+
+            ExternCallMethods.Add("ExtractZip", (object[] args) =>
+            {
+                string zipPath = (string)args[0];
+                string extractPath = (string)args[1];
+                ZipFile.ExtractToDirectory(zipPath, extractPath);
+                return null;
+            });
+
+            ExternCallMethods.Add("CreateZip", (object[] args) =>
+            {
+                string zipPath = (string)args[0];
+                string sourcePath = (string)args[1];
+                ZipFile.CreateFromDirectory(sourcePath, zipPath);
+                return null;
+            });
+
+            ExternCallMethods.Add("AddFileToZip", (object[] args) =>
+            {
+                string zipPath = (string)args[0];
+                string sourcePath = (string)args[1];
+                ZipArchive zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Update);
+                zipArchive.CreateEntryFromFile(sourcePath, Path.GetFileName(sourcePath));
+                zipArchive.Dispose();
+                return null;
             });
 
             ExternCallMethods.Add("DateTimeNow", (object[] args) =>
@@ -635,11 +742,55 @@ namespace FSC.Dirty.Runtime
                 }
             });
 
+            ExternCallMethods.Add("UploadFile", (object[] args) =>
+            {
+                string url = (string)args[0];
+                string path = (string)args[1];
+
+                using (var client = new HttpClient())
+                {
+                    var fileBytes = File.ReadAllBytes(path);
+                    var fileContent = new ByteArrayContent(fileBytes);
+                    var response = client.PostAsync(url, fileContent).GetAwaiter().GetResult();
+                    response.EnsureSuccessStatusCode();
+                    return null;
+                }
+            });
+
+            ExternCallMethods.Add("UploadString", (object[] args) =>
+            {
+                string url = (string)args[0];
+                string content = (string)args[1];
+
+                using (var client = new HttpClient())
+                {
+                    var stringContent = new StringContent(content);
+                    var response = client.PostAsync(url, stringContent).GetAwaiter().GetResult();
+                    response.EnsureSuccessStatusCode();
+                    return null;
+                }
+            });
+
             ExternCallMethods.Add("RegMatch", (object[] args) =>
             {
                 string input = (string)args[0];
                 string pattern = (string)args[1];
                 return Regex.IsMatch(input, pattern) ? 1 : 0;
+            });
+
+            ExternCallMethods.Add("RegReplace", (object[] args) =>
+            {
+                string input = (string)args[0];
+                string pattern = (string)args[1];
+                string replacement = (string)args[2];
+                return Regex.Replace(input, pattern, replacement);
+            });
+
+            ExternCallMethods.Add("RegSplit", (object[] args) =>
+            {
+                string input = (string)args[0];
+                string pattern = (string)args[1];
+                return Regex.Split(input, pattern)[Convert.ToInt32(args[2])];
             });
 
             ExternCallMethods.Add("EnvGet", (object[] args) =>
@@ -666,25 +817,29 @@ namespace FSC.Dirty.Runtime
             ExternCallMethods.Add("EnvGetAll", (object[] args) =>
             {
                 var output = Environment.GetEnvironmentVariables();
-                return output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                var result = output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                return string.Join(", ", result);
             });
 
             ExternCallMethods.Add("EnvGetAllUser", (object[] args) =>
             {
                 var output = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
-                return output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                var result = output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                return string.Join(", ", result);
             });
 
             ExternCallMethods.Add("EnvGetAllMachine", (object[] args) =>
             {
                 var output = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
-                return output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                var result = output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                return string.Join(", ", result);
             });
 
             ExternCallMethods.Add("EnvGetAllProcess", (object[] args) =>
             {
                 var output = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process);
-                return output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                var result = output.Keys.Cast<string>().Select(key => $"{key}={output[key]}").ToArray();
+                return string.Join(", ", result);
             });
 
             ExternCallMethods.Add("Sleep", (object[] args) =>
@@ -892,6 +1047,27 @@ namespace FSC.Dirty.Runtime
 
                 return method.Invoke(null, methodArgs);
             });
+        }
+
+        private static void DirectoryCopy(string source, string destination)
+        {
+            DirectoryInfo sourceDirectory = new DirectoryInfo(source);
+            DirectoryInfo destinationDirectory = new DirectoryInfo(destination);
+
+            if (!destinationDirectory.Exists)
+            {
+                destinationDirectory.Create();
+            }
+
+            foreach (FileInfo file in sourceDirectory.GetFiles())
+            {
+                file.CopyTo(Path.Combine(destinationDirectory.FullName, file.Name), true);
+            }
+
+            foreach (DirectoryInfo directory in sourceDirectory.GetDirectories())
+            {
+                DirectoryCopy(directory.FullName, Path.Combine(destinationDirectory.FullName, directory.Name));
+            }
         }
     }
 }

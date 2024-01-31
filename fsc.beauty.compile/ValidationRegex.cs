@@ -1,7 +1,6 @@
-﻿using System.Dynamic;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
-namespace fsc.beauty.compile
+namespace FSC.Beauty.Compile
 {
     internal static class ValidationRegex
     {
@@ -36,7 +35,7 @@ namespace fsc.beauty.compile
             // Handle case with no commas - single argument
             if (args.IndexOf(',') == -1)
             {
-                result = [ args.ToString() ];
+                result = [args.ToString()];
                 return result;
             }
 

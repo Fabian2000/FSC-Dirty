@@ -1,7 +1,6 @@
-﻿using fsc.beauty.compile;
-using FSC.Dirty.Runtime.Template;
+﻿using FSC.Dirty.Runtime.Template;
 using System.Text.RegularExpressions;
-using static fsc.beauty.compile.ValidationRegex;
+using static FSC.Beauty.Compile.ValidationRegex;
 
 namespace FSC.Beauty.Compile
 {
