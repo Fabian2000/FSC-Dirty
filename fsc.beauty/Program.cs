@@ -10,12 +10,19 @@ namespace fsc.beauty
         {
 #if DEBUG
             string code = @"
-extern Title(""Example Script"")
+number count = 10
 
-extern WriteLine(""This script shows, how you can write plugins with FSC.Beauty in your .NET Application including the call of own functions"")
-extern LongBeep(10)
-extern Pause()
+number minCount = 0
+text currentCount = ""empty""
 
+while count >= minCount
+	extern WriteLine(""Hello"")
+	currentCount = extern NumberToText(count)
+	extern WriteLine(currentCount)
+	count = extern MathSub(count, 1)
+	extern Sleep(1000)
+
+extern Sleep(1000)
 extern Exit(0)
 ";
             //Compiler compiler = new Compiler();

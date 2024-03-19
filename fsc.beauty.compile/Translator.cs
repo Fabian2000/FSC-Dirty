@@ -42,7 +42,7 @@ namespace FSC.Beauty.Compile
                 // If condition found, make conditional operation to variable
                 if (line.Contains("==") || line.Contains("<") || line.Contains(">") || line.Contains("!=") || line.Contains(">=") || line.Contains("<="))
                 {
-                    int startIndex = line.Contains("if ") ? line.IndexOf("if ") + "if ".Length : line.IndexOf('=') + 1;
+                    int startIndex = line.Contains("if ") ? line.IndexOf("if ") + "if ".Length : line.Contains("while ") ? line.IndexOf("while ") + "while ".Length : line.IndexOf('=') + 1;
                     string valueSplit = line.Substring(startIndex).Trim();
 
                     string variableName = ConditionalOperationToVariable(valueSplit, i);
@@ -502,15 +502,22 @@ namespace FSC.Beauty.Compile
 
         private string /* New Variable*/ ConditionalOperationToVariable(string value, long row)
         {
-            string variableName = $"{_uniqueVariableName}COMPILEROPERATOR{row}";
+            try
+            {
+                string variableName = $"{_uniqueVariableName}COMPILEROPERATOR{row}";
 
-            string value1 = Regex.Split(value, @"==|<|>|!=|>=|<=|&&|\|\|")[0].Trim();
-            string value2 = Regex.Split(value, @"==|<|>|!=|>=|<=|&&|\|\|")[1].Trim();
+                string value1 = Regex.Split(value, @"==|!=|>=|<=|&&|\|\||<|>")[0].Trim();
+                string value2 = Regex.Split(value, @"==|!=|>=|<=|&&|\|\||<|>")[1].Trim();
 
-            NewVariable($"var {variableName}Temp1 = {PrefixVar(value1)}", row);
-            NewVariable($"var {variableName}Temp2 = {PrefixVar(value2)}", row);
+                NewVariable($"var {variableName}Temp1 = {PrefixVar(value1)}", row);
+                NewVariable($"var {variableName}Temp2 = {PrefixVar(value2)}", row);
 
-            return CalculateConditionalOperation($"{variableName}Temp1", $"{variableName}Temp2", Regex.Match(value, @"==|<|>|!=|>=|<=|&&|\|\|").Value, row);
+                return CalculateConditionalOperation($"{variableName}Temp1", $"{variableName}Temp2", Regex.Match(value, @"==|<|>|!=|>=|<=|&&|\|\|").Value, row);
+            }
+            catch (Exception ex)
+            {
+                throw new($"Invalid conditional operation in line {row}", ex);
+            }
         }
 
         private string /* New Variable */ CalculateConditionalOperation(string variable1, string variable2, string @operator, long row)
