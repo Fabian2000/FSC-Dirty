@@ -10,6 +10,7 @@ namespace FSC.Beauty.Compile
         private List<string> _code = new List<string>();
         private string _uniqueVariableName = string.Empty;
         private int _uniqueVariableIndex = 0;
+        private int _lastConditionCount = 0;
 
         internal struct VarArrInfo
         {
@@ -457,7 +458,9 @@ namespace FSC.Beauty.Compile
             string endIf = EndIfStatement(variableName, row, ref code, isLoop, !isLoop ? "" : $"{variableName}STARTBEFORE");
             NewVariable($"var {variableName} = {conditionalValue}", row);
             string startIf = $"{variableName}START";
-            _code.Add($"target {startIf}BEFORE");
+            // _code.Insert instead of _code.Add - Jump point must be before condition,
+            // otherwise the condition result stays the same in a loop, which creates an infinity loop at some point
+            _code.Insert(_code.Count - 1 - _lastConditionCount, $"target {startIf}BEFORE");
             _code.Add($"is {variableName} {startIf}");
             _code.Add($"jump {endIf}");
             _code.Add($"target {startIf}");
@@ -512,7 +515,7 @@ namespace FSC.Beauty.Compile
                 NewVariable($"var {variableName}Temp1 = {PrefixVar(value1)}", row);
                 NewVariable($"var {variableName}Temp2 = {PrefixVar(value2)}", row);
 
-                return CalculateConditionalOperation($"{variableName}Temp1", $"{variableName}Temp2", Regex.Match(value, @"==|<|>|!=|>=|<=|&&|\|\|").Value, row);
+                return CalculateConditionalOperation($"{variableName}Temp1", $"{variableName}Temp2", Regex.Match(value, @"==|!=|>=|<=|&&|\|\||<|>").Value, row);
             }
             catch (Exception ex)
             {
@@ -531,12 +534,15 @@ namespace FSC.Beauty.Compile
             {
                 case "==":
                     _code.Add($"equals {returnVariableName} {variable1} {variable2}");
+                    _lastConditionCount = 1;
                     break;
                 case "<":
                     _code.Add($"less {returnVariableName} {variable1} {variable2}");
+                    _lastConditionCount = 1;
                     break;
                 case ">":
                     _code.Add($"greater {returnVariableName} {variable1} {variable2}");
+                    _lastConditionCount = 1;
                     break;
                 case "!=":
                     NewVariable($"var {variableGreater} = 0", row);
@@ -547,6 +553,7 @@ namespace FSC.Beauty.Compile
 
                     _code.Add($"or {returnVariableName} {variableLess} {variableGreater}");
                     _code.Add($"equals {returnVariableName} {returnVariableName} {variableFalse}");
+                    _lastConditionCount = 4;
                     break;
                 case ">=":
                     NewVariable($"var {variableGreater} = 0", row);
@@ -554,6 +561,7 @@ namespace FSC.Beauty.Compile
                     _code.Add($"greater {variableGreater} {variable1} {variable2}");
                     _code.Add($"equals {returnVariableName} {variable1} {variable2}");
                     _code.Add($"or {returnVariableName} {returnVariableName} {variableGreater}");
+                    _lastConditionCount = 3;
                     break;
                 case "<=":
                     NewVariable($"var {variableLess} = 0", row);
@@ -561,6 +569,7 @@ namespace FSC.Beauty.Compile
                     _code.Add($"less {variableLess} {variable1} {variable2}");
                     _code.Add($"equals {returnVariableName} {variable1} {variable2}");
                     _code.Add($"or {returnVariableName} {returnVariableName} {variableLess}");
+                    _lastConditionCount = 3;
                     break;
                 default:
                     throw new($"Invalid conditional operator {@operator} in line {row}");

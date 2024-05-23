@@ -8,8 +8,8 @@ namespace FSC.Beauty.Compile
         {
             return validationRegexTypes switch
             {
-                ValidationRegexTypes.NewVariable => new Regex(@"^\s*(var|text|number|char)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(((?!\\)""(.*?[^\\])""|(\d+\.\d+)|(\d+)|[a-zA-Z_][a-zA-Z0-9_]+))\s*$"),
-                ValidationRegexTypes.SetVariable => new Regex(@"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(((?!\\)""(.*?[^\\])""|(\d+\.\d+)|(\d+)|[a-zA-Z_][a-zA-Z0-9_]+))\s*$"),
+                ValidationRegexTypes.NewVariable => new Regex(@"^\s*(var|text|number|char)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(((?!\\)""(.*?[^\\])""|-?(\d+\.\d+)|-?(\d+)|[a-zA-Z_][a-zA-Z0-9_]+))\s*$"),
+                ValidationRegexTypes.SetVariable => new Regex(@"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(((?!\\)""(.*?[^\\])""|-?(\d+\.\d+)|-?(\d+)|[a-zA-Z_][a-zA-Z0-9_]+))\s*$"),
                 ValidationRegexTypes.NewArray => new Regex(@"^\s*(var|text|number|char)\[\]\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(\[\s*(.+)\s*\]\s*$)\s*$"),
                 ValidationRegexTypes.SetArray => new Regex(@"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\[\]\s*=\s*(\[\s*(.+)\s*\]\s*$)\s*$"),
                 ValidationRegexTypes.SetArrayIndex => new Regex(@"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]\s*=\s*(((?!\\)""(.*?[^\\])""|(\d+\.\d+)|(\d+)|[a-zA-Z_][a-zA-Z0-9_]+))\s*$"),
